@@ -35,7 +35,8 @@ export default {
     // https://go.nuxtjs.dev/axios
     '@nuxtjs/axios',
     // https://go.nuxtjs.dev/pwa
-    '@nuxtjs/pwa'
+    '@nuxtjs/pwa',
+    'nuxt-socket-io'
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
@@ -50,5 +51,32 @@ export default {
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {
+  },
+
+  serverMiddleware: [
+    {
+      path: 'api',
+      handler: '~/server'
+    }
+  ],
+
+  io: {
+    sockets: [
+      {
+        name: 'spy',
+        default: true,
+        url: process.env.SERVER_URL,
+        vuex: {
+          mutations: [
+            {
+              got: 'MAKE_SURE'
+            }
+          ]
+        },
+        namespaces: {
+
+        }
+      }
+    ]
   }
 }
