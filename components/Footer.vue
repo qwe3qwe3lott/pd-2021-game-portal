@@ -3,6 +3,9 @@
     <b>Footer tut</b>
     <button @click="getMessage" />
     {{ messageRxd }}
+    <div>
+      {{ text }}
+    </div>
   </footer>
 </template>
 
@@ -11,11 +14,12 @@ export default {
   name: 'Footer',
   data () {
     return {
-      messageRxd: '1'
+      messageRxd: '1',
+      text: '2'
     }
   },
   mounted () {
-    this.socket = this.$nuxtSocket({ name: 'spy' })
+    this.socket = this.$nuxtSocket({ name: 'spy', channel: '/index' })
     console.log(this.socket)
   },
   methods: {

@@ -1,4 +1,5 @@
-export default {
+module.exports = {
+  telemetry: false,
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
     title: 'pd-2021-gama-portal',
@@ -74,7 +75,9 @@ export default {
           ]
         },
         namespaces: {
-
+          '/index': {
+            listeners: ['got --> text']
+          }
         }
       }
     ]
