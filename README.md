@@ -13,7 +13,7 @@ $ npm run dev
 $ npm run build
 $ npm run start
 
-# generate static project
+# Сгенерировать фронт
 $ npm run generate
 ```
 
