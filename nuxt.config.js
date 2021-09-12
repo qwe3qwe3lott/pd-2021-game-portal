@@ -70,7 +70,7 @@ module.exports = {
       {
         name: 'spy',
         default: true,
-        url: process.env.NODE_ENV === 'production' ? 'http://localhost:3000' : 'http://localhost:3000'
+        url: process.env.NODE_ENV === 'production' ? 'https://nuxt.serygin.ru' : 'http://localhost:3000'
       }
     ]
   }
