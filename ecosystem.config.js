@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'GamePortal',
+      name: 'pd-2021-gama-portal',
       exec_mode: 'cluster',
       instances: 'max',
       script: './node_modules/nuxt/bin/nuxt.js',

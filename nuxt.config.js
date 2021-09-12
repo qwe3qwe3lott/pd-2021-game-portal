@@ -39,12 +39,14 @@ module.exports = {
     '@nuxtjs/axios',
     // https://go.nuxtjs.dev/pwa
     '@nuxtjs/pwa',
-    'nuxt-socket-io'
+    'nuxt-socket-io',
+    '@nuxtjs/proxy'
   ],
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
-  axios: {},
-
+  axios: {
+    proxy: true
+  },
   // PWA module configuration: https://go.nuxtjs.dev/pwa
   pwa: {
     manifest: {
@@ -68,7 +70,7 @@ module.exports = {
       {
         name: 'spy',
         default: true,
-        url: 'http://localhost:3000',
+        url: 'https://nuxt.serygin.ru/',
         vuex: {
           mutations: [
             {

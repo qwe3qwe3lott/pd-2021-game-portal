@@ -30,7 +30,7 @@ export default {
   mounted () {
     this.socket = this.$nuxtSocket({
       name: 'spy',
-      channel: '/rooms',
+      channel: 'rooms',
       serverAPI: true
     })
     console.log(this.socket)
