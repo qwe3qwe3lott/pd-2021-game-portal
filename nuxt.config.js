@@ -27,7 +27,7 @@ module.exports = {
   // Auto import components: https://go.nuxtjs.dev/config-components
   components: true,
 
-  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
+  // Modules for dev and build (recommended ): https://go.nuxtjs.dev/config-modules
   buildModules: [
     // https://go.nuxtjs.dev/eslint
     '@nuxtjs/eslint-module'
@@ -70,19 +70,7 @@ module.exports = {
       {
         name: 'spy',
         default: true,
-        url: 'https://nuxt.serygin.ru/',
-        vuex: {
-          mutations: [
-            {
-              got: 'MAKE_SURE'
-            }
-          ]
-        },
-        namespaces: {
-          '/index': {
-            listeners: ['got --> text']
-          }
-        }
+        url: process.env.NODE_ENV === 'production' ? 'http://localhost:3000' : 'http://localhost:3000'
       }
     ]
   }

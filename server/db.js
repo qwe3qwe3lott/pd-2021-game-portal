@@ -1,22 +1,4 @@
-const rooms = [
-  {
-    id: 'test',
-    users: {
-      players: {
-        spies: [],
-        others: []
-      },
-      viewers: []
-    },
-    locations: [
-      {
-        name: 'test',
-        img: 'url',
-        roles: []
-      }
-    ]
-  }
-]
+const rooms = []
 
 export default {
   rooms

@@ -1,6 +1,6 @@
 <template>
   <header>
-    Header tut
+    <b>Header</b>
   </header>
 </template>
 

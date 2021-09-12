@@ -1,9 +1,12 @@
 <template>
   <div>
-    <div v-for="(item, index) in rooms" :key="index">
-      {{ item }}
-    </div>
-    <button @click="createRoom" />
+    <nuxt-link :to="'/'">
+      Назад
+    </nuxt-link>
+    <br>
+    <button @click="createRoom">
+      Создать комнату
+    </button>
   </div>
 </template>
 
@@ -12,32 +15,22 @@ export default {
   data () {
     return {
       ioApi: {},
-      ioData: {},
-      rooms: ['1']
-    }
-  },
-  watch: {
-    async 'ioApi.ready' () {
-      console.log(123)
-      this.rooms = await this.ioApi.getRooms()
-      console.log(321)
-    },
-    'ioData.rooms' (rooms) {
-      console.log(rooms)
-      this.rooms = rooms
+      ioData: {}
     }
   },
   mounted () {
     this.socket = this.$nuxtSocket({
       name: 'spy',
-      channel: 'rooms',
+      channel: '/spy',
       serverAPI: true
     })
-    console.log(this.socket)
+    // console.log(this.socket)
   },
   methods: {
     async createRoom () {
-      await this.ioApi.createRoom()
+      const roomId = await this.ioApi.createRoom()
+      console.log(roomId)
+      await this.$router.push({ path: `/spy/${roomId}` })
     }
   }
 }
