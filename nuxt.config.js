@@ -14,6 +14,8 @@ module.exports = {
     ]
   },
 
+  loading: { color: '#fff' },
+
   // Global CSS: https://go.nuxtjs.dev/config-css
   css: [
   ],
@@ -66,7 +68,7 @@ module.exports = {
       {
         name: 'spy',
         default: true,
-        url: process.env.SERVER_URL,
+        url: 'http://localhost:3000',
         vuex: {
           mutations: [
             {

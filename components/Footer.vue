@@ -1,6 +1,6 @@
 <template>
   <footer>
-    <b>Footer tut</b>
+    <b>Footer не нажимайте на</b>
     <button @click="getMessage" />
     {{ messageRxd }}
     <div>
@@ -19,8 +19,8 @@ export default {
     }
   },
   mounted () {
-    this.socket = this.$nuxtSocket({ name: 'spy', channel: '/index' })
-    console.log(this.socket)
+    // this.socket = this.$nuxtSocket({ name: 'spy', channel: '/index' })
+    // console.log(this.socket)
   },
   methods: {
     getMessage () {
