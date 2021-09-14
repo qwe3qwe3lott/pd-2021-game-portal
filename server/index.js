@@ -1,9 +1,9 @@
 const consola = require('consola')
 const express = require('express')
-const mongoose = require('mongoose')
 const { Nuxt, Builder } = require('nuxt')
 const config = require('../nuxt.config.js')
 require('dotenv').config()
+require('./config/database')
 
 const RoomRouter = require('./routes/room')
 
@@ -18,11 +18,6 @@ async function start (uri, callback) {
       port: process.env.PORT || 8000
     }
   }
-  console.log('dsgsdg', `mongodb+srv://${process.env.MONGO_USER_LOGIN}:${process.env.MONGO_USER_PASSWORD}@cluster0.xxhkg.mongodb.net/${process.env.MONGO_NAME_COLLECTION}`)
-  await mongoose.connect(`mongodb+srv://${process.env.MONGO_USER_LOGIN}:${process.env.MONGO_USER_PASSWORD}@cluster0.xxhkg.mongodb.net/${process.env.MONGO_NAME_COLLECTION}`, {
-    useNewUrlParser: true
-    // useFindAndModify: false
-  })
   const nuxt = new Nuxt(config)
   await nuxt.listen()
   consola.log('nuxt server listening', nuxt.server.options.server)

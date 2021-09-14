@@ -1,4 +1,4 @@
-export default function (req, res, next) {
+export default function (req, res, nuxt) {
   console.log('Thisdgsd;gsdg')
-  next()
+  nuxt()
 }
