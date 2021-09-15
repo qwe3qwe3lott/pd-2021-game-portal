@@ -1,15 +1,16 @@
 import { resolve as pResolve } from 'path'
 import consolaGlobalInstance from 'consola'
+const Room = require('../models/room.js')
 const { default: Data } = require(pResolve('./server/db'))
 
 const API = {
   version: 1.0,
   evts: {
-    users: {
-      data: ['']
+    rename: {
+      data: ''
     },
-    kick: {
-      data: false
+    users: {
+      data: [{}]
     }
   },
   methods: {
@@ -18,12 +19,6 @@ const API = {
         roomId: ''
       },
       resp: ['']
-    },
-    checkRoom: {
-      msg: {
-        roomId: ''
-      },
-      resp: true
     },
     createRoom: {
       resp: ''
@@ -37,15 +32,46 @@ const API = {
   }
 }
 
-const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-const roomIdLength = 10
+const additionalUsernameChar = ')'
 
-const createRoomId = function () {
-  let roomId = ''
-  for (let i = 0; i < roomIdLength; i++) {
-    roomId += chars.charAt(Math.floor(Math.random() * chars.length))
+const prepareRoom = (roomId) => {
+  // TODO: сделать нормальную инициализацию объекта по умолчанию
+  const room = {
+    id: roomId,
+    users: [],
+    locations: [
+      {
+        title: 'Парк',
+        img: '',
+        roles: ['Бабка']
+      }
+    ],
+    options: {
+      spiesCount: 2, // Количество шпионов
+      roundTime: 480, // Продолжительность раунда
+      voteTime: 15, // Продолжительность голосования
+      briefTime: 10, // Продолжительность перерыва между раундами
+      spyChanceTime: 10 // Время на выбор локации шпионом после его разоблачения
+    },
+    isRunning: true, // Флаг того, что партия продолжается
+    state: {
+      startMoment: '',
+      isRunning: true, // Флаг того, что раунд продолжается
+      roles: []
+    }
   }
-  return roomId
+  getRooms().push(room)
+  return room
+}
+
+const getRooms = () => Data.rooms.spy
+const getRoom = roomId => Data.rooms.spy.find(room => room.id === roomId)
+
+const spam = (event, data, room, socket) => {
+  for (const user of room.users) {
+    socket.to(`spy/${room.id}/${user.username}`).emit(event, data)
+  }
+  socket.emit(event, data)
 }
 
 export default function Svc (socket, io) {
@@ -53,78 +79,51 @@ export default function Svc (socket, io) {
     getAPI () {
       return API
     },
-    checkRoom ({ roomId }) {
-      const room = Data.rooms.find(room => room.id === roomId)
-      if (!room) {
-        socket.emit('kick', { data: true })
-      }
-      return room
-    },
     getUsers ({ roomId }) {
-      const room = Data.rooms.find(room => room.id === roomId)
-      // Временно создаётся комната после перехода по несуществующему адрему комнаты - этого потом не будет
-      consolaGlobalInstance.log(room)
+      const room = getRoom(roomId)
       if (!room) {
         socket.emit('kick', { data: true })
         return []
       }
-      // Конец
       return room.users
     },
-    createRoom () {
-      let roomId = createRoomId()
-      while (Data.rooms.some(room => room.id === roomId)) {
-        roomId = createRoomId()
+    async joinRoom ({ roomId, username }) {
+      let room = getRoom(roomId)
+      // Если комната есть в БД, но нет в ОЗУ
+      if (!room && await Room.findOne({ _id: roomId }) !== null) {
+        room = prepareRoom(roomId)
       }
-      Data.rooms.push({
-        id: roomId,
-        users: []
+      if (room.users.some(user => user.username === username)) {
+        username += additionalUsernameChar
+        socket.emit('rename', { data: username })
+      }
+      room.users.push({
+        username,
+        isWatcher: true
       })
-      consolaGlobalInstance.log('Created room:', roomId)
-      return roomId
-    },
-    joinRoom ({ roomId, username }) {
-      const room = Data.rooms.find(room => room.id === roomId)
-      // Временно создаётся комната после перехода по несуществующему адрему комнаты - этого потом не будет
-      consolaGlobalInstance.log(room)
-      if (!room) {
-        socket.emit('kick', { data: true })
-        return
-      }
-      // Конец
-      if (!room.users.includes(username)) {
-        room.users.push(username)
-      }
-      const namespace = `spy/${roomId}`
+      const namespace = `spy/${roomId}/${username}`
+      consolaGlobalInstance.log(namespace)
       socket.once('disconnect', () => {
         spySvc.leaveRoom({ roomId, username })
       })
       socket.join(namespace)
-      const data = {
-        data: room.users
-      }
-      socket.to(namespace).emit('users', data)
-      socket.emit('users', data)
+      spam('users', { data: room.users }, room, socket)
       consolaGlobalInstance.log(`${username} joined to room ${roomId}`)
     },
     leaveRoom ({ roomId, username }) {
-      const room = Data.rooms.find(room => room.id === roomId)
+      const room = getRoom(roomId)
       if (!room) {
         throw new Error(`room ${roomId} not found`)
       }
 
-      if (room.users && room.users.includes(username)) {
-        const userId = room.users.findIndex(user => user === username)
+      const userId = room.users.findIndex(user => user.username === username)
+      if (userId !== -1) {
         room.users.splice(userId, 1)
       }
 
-      const namespace = `spy/${roomId}`
+      const namespace = `spy/${roomId}/${username}`
       socket.leave(namespace)
-      const data = {
-        data: room.users
-      }
-      socket.to(namespace).emit('users', data)
-      socket.emit('users', data)
+      spam('users', { data: room.users }, room, socket)
     }
   })
   return spySvc

@@ -11,26 +11,12 @@
 </template>
 
 <script>
+
 export default {
-  data () {
-    return {
-      ioApi: {},
-      ioData: {}
-    }
-  },
-  mounted () {
-    this.socket = this.$nuxtSocket({
-      name: 'spy',
-      channel: '/spy',
-      serverAPI: true
-    })
-    // console.log(this.socket)
-  },
   methods: {
     async createRoom () {
-      const roomId = await this.ioApi.createRoom()
-      console.log(roomId)
-      await this.$router.push({ path: `/spy/${roomId}` })
+      const res = await this.$back.posts.createRoom({})
+      await this.$router.push({ path: `/spy/${res.data.roomId}` })
     }
   }
 }

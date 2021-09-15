@@ -1,4 +1,6 @@
-const rooms = []
+const rooms = {
+  spy: []
+}
 
 export default {
   rooms

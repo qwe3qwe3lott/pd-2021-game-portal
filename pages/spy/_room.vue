@@ -8,8 +8,8 @@
     <div v-if="!username">
       Введите логин чтобы войти в комнату
     </div>
-    <div v-for="(item, index) in users" :key="index">
-      {{ item }}
+    <div v-for="(user, index) in users" :key="index">
+      {{ user.username }}
     </div>
     <br>
     <nuxt-link :to="'/'">
@@ -19,7 +19,13 @@
 </template>
 
 <script>
+import consolaGlobalInstance from 'consola'
+
 export default {
+  async validate (ctx) {
+    const res = await ctx.$back.getters.checkRoom(ctx.route.params.room)
+    return res.data.exists
+  },
   data () {
     return {
       users: [],
@@ -30,31 +36,34 @@ export default {
     }
   },
   computed: {
-    username () {
-      return this.$store.getters.getUsername
+    username: {
+      get () {
+        return this.$store.getters.getUsername
+      },
+      set (username) {
+        this.$store.commit('SET_USERNAME', username)
+      }
     }
   },
   watch: {
-    async 'ioApi.ready' () {
-      await this.ioApi.checkRoom({
-        roomId: this.roomId
-      })
+    'ioApi.ready' () {
       if (!this.username) {
         return
       }
       this.joinRoom()
     },
     'ioData.users' (users) {
+      consolaGlobalInstance.log('users', users)
       this.users = users
     },
-    'ioData.kick' (flag) {
-      console.log('kick', flag)
-      if (flag) {
-        this.$router.push({ path: '/spy' })
+    'ioData.rename' (username) {
+      if (username !== '') {
+        this.username = username
       }
     }
   },
   mounted () {
+    this.username = new Date().getMilliseconds().toString()
     this.socket = this.$nuxtSocket({
       name: 'spy',
       channel: '/spy',

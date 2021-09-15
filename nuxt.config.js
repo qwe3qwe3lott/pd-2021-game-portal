@@ -22,6 +22,7 @@ module.exports = {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
+    '@/plugins/api/index'
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components
@@ -70,7 +71,7 @@ module.exports = {
       {
         name: 'spy',
         default: true,
-        url: process.env.NODE_ENV === 'production' ? 'https://nuxt.serygin.ru' : 'http://localhost:3000'
+        url: process.env.NODE_ENV === 'production' ? 'https://portal-games-pd.ru' : 'http://localhost:3000'
       }
     ]
   }
