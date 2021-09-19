@@ -4,12 +4,18 @@ const {
 } = require('mongoose')
 
 const schema = new Schema({
-  title: {
+  originOptions: {
     type: String,
     required: true
   },
-  description: {
+  creationTime: {
+    type: Date,
+    default: Date.now,
+    required: true
+  },
+  game: {
     type: String,
+    enum: ['spy'],
     required: true
   }
 })

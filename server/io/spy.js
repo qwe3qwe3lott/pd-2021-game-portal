@@ -1,5 +1,6 @@
 import { resolve as pResolve } from 'path'
 import consolaGlobalInstance from 'consola'
+const api = require('../axios/api')
 const Room = require('../models/room.js')
 const { default: Data } = require(pResolve('./server/db'))
 
@@ -11,15 +12,12 @@ const API = {
     },
     users: {
       data: [{}]
+    },
+    locations: {
+      data: [{}]
     }
   },
   methods: {
-    getUsers: {
-      msg: {
-        roomId: ''
-      },
-      resp: ['']
-    },
     createRoom: {
       resp: ''
     },
@@ -34,10 +32,21 @@ const API = {
 
 const additionalUsernameChar = ')'
 
-const prepareRoom = (roomId) => {
+const prepareRoom = async (roomId) => {
   // TODO: сделать нормальную инициализацию объекта по умолчанию
-  const room = {
+  const res = await api.getters.getRoomOriginOptions(roomId)
+  const room = JSON.parse(res.data.options)
+  room.id = roomId
+  room.users = []
+  room.isRunning = false
+  room.state = {
+    startMoment: null,
+    isRunning: true,
+    roles: []
+  }
+  /* const room = {
     id: roomId,
+    owner: 'qwe3', // Ник владельца игры при создании комнаты
     users: [],
     locations: [
       {
@@ -55,11 +64,12 @@ const prepareRoom = (roomId) => {
     },
     isRunning: true, // Флаг того, что партия продолжается
     state: {
-      startMoment: '',
+      startMoment: null,
       isRunning: true, // Флаг того, что раунд продолжается
       roles: []
     }
-  }
+  } */
+
   getRooms().push(room)
   return room
 }
@@ -79,19 +89,11 @@ export default function Svc (socket, io) {
     getAPI () {
       return API
     },
-    getUsers ({ roomId }) {
-      const room = getRoom(roomId)
-      if (!room) {
-        socket.emit('kick', { data: true })
-        return []
-      }
-      return room.users
-    },
     async joinRoom ({ roomId, username }) {
       let room = getRoom(roomId)
       // Если комната есть в БД, но нет в ОЗУ
       if (!room && await Room.findOne({ _id: roomId }) !== null) {
-        room = prepareRoom(roomId)
+        room = await prepareRoom(roomId)
       }
       if (room.users.some(user => user.username === username)) {
         username += additionalUsernameChar
@@ -106,6 +108,7 @@ export default function Svc (socket, io) {
       socket.once('disconnect', () => {
         spySvc.leaveRoom({ roomId, username })
       })
+      socket.emit('locations', { data: room.locations })
       socket.join(namespace)
       spam('users', { data: room.users }, room, socket)
       consolaGlobalInstance.log(`${username} joined to room ${roomId}`)

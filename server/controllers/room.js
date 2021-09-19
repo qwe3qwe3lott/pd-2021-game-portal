@@ -23,11 +23,18 @@ module.exports.getAllRooms = async function (req, res) {
   res.status(200).json({ rooms })
 }
 
+module.exports.getRoom = async function (req, res) {
+  const roomId = req.query.roomId
+  const room = await Room.findOne({ _id: roomId })
+  res.status(200).json({ options: room.originOptions })
+}
+
 module.exports.addRoom = async function (req, res) {
+  const data = req.body
   // Поменять поля
   const room = new Room({
-    title: 'Hello',
-    description: 'HelloHelloHello'
+    originOptions: JSON.stringify(data.originOptions),
+    game: data.game
   })
   await room.save()
   res.status(200).json({

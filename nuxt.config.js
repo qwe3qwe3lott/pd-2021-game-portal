@@ -1,3 +1,4 @@
+// eslint-disable-next-line nuxt/no-cjs-in-config
 module.exports = {
   telemetry: false,
   // Global page headers: https://go.nuxtjs.dev/config-head

@@ -33,6 +33,9 @@ async function start (uri, callback) {
   consola.log('Nuxt app ready!')
 }
 
+app.use(express.json())
+app.use(express.urlencoded())
+
 app.use('/rooms', RoomRouter)
 
 if (require.main === module) {

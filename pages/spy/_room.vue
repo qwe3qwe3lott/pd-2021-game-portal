@@ -1,16 +1,11 @@
 <template>
   <div>
-    <form v-if="!username" @submit.prevent="submitUsername">
-      <input v-model="usernameField" type="text">
-      <input type="submit">
-    </form>
     <h1>Комната {{ $route.params.room }}</h1>
-    <div v-if="!username">
-      Введите логин чтобы войти в комнату
-    </div>
     <div v-for="(user, index) in users" :key="index">
       {{ user.username }}
     </div>
+    <br>
+    <LocationCard v-for="(location, index) in locations" :key="index" :location="location" />
     <br>
     <nuxt-link :to="'/'">
       Выйти
@@ -20,8 +15,13 @@
 
 <script>
 import consolaGlobalInstance from 'consola'
+import LocationCard from '@/components/spy/LocationCard'
 
 export default {
+  components: {
+    LocationCard
+  },
+  layout: 'gameLayout',
   async validate (ctx) {
     const res = await ctx.$back.getters.checkRoom(ctx.route.params.room)
     return res.data.exists
@@ -29,7 +29,7 @@ export default {
   data () {
     return {
       users: [],
-      usernameField: '',
+      locations: [],
       roomId: this.$route.params.room,
       ioApi: {},
       ioData: {}
@@ -37,12 +37,8 @@ export default {
   },
   computed: {
     username: {
-      get () {
-        return this.$store.getters.getUsername
-      },
-      set (username) {
-        this.$store.commit('SET_USERNAME', username)
-      }
+      get () { return this.$store.getters.getUsername },
+      set (username) { this.$store.commit('SET_USERNAME', username) }
     }
   },
   watch: {
@@ -57,13 +53,17 @@ export default {
       this.users = users
     },
     'ioData.rename' (username) {
+      consolaGlobalInstance.log('username', username)
       if (username !== '') {
         this.username = username
       }
+    },
+    'ioData.locations' (locations) {
+      consolaGlobalInstance.log('locations', locations)
+      this.locations = locations
     }
   },
   mounted () {
-    this.username = new Date().getMilliseconds().toString()
     this.socket = this.$nuxtSocket({
       name: 'spy',
       channel: '/spy',
@@ -71,17 +71,6 @@ export default {
     })
   },
   methods: {
-    async submitUsername () {
-      this.users = await this.ioApi.getUsers({
-        roomId: this.roomId
-      })
-      console.log('users', this.users)
-      if (this.users.includes(this.usernameField)) {
-        return false
-      }
-      this.$store.commit('SET_USERNAME', this.usernameField)
-      this.joinRoom()
-    },
     joinRoom () {
       this.ioApi.joinRoom({
         roomId: this.roomId,
