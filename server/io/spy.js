@@ -2,6 +2,7 @@ import { resolve as pResolve } from 'path'
 import consolaGlobalInstance from 'consola'
 const api = require('../axios/api')
 const Room = require('../models/room.js')
+const SpyRoom = require('../objects/spy/Room')
 const { default: Data } = require(pResolve('./server/db'))
 
 const API = {
@@ -26,50 +27,27 @@ const API = {
         roomId: '',
         username: ''
       }
+    },
+    leaveRoom: {
+      msg: {
+        roomId: '',
+        username: ''
+      }
+    },
+    become: {
+      msg: {
+        roomId: '',
+        username: '',
+        becomeWatcher: ''
+      }
     }
   }
 }
 
-const additionalUsernameChar = ')'
-
 const prepareRoom = async (roomId) => {
-  // TODO: сделать нормальную инициализацию объекта по умолчанию
   const res = await api.getters.getRoomOriginOptions(roomId)
-  const room = JSON.parse(res.data.options)
-  room.id = roomId
-  room.users = []
-  room.isRunning = false
-  room.state = {
-    startMoment: null,
-    isRunning: true,
-    roles: []
-  }
-  /* const room = {
-    id: roomId,
-    owner: 'qwe3', // Ник владельца игры при создании комнаты
-    users: [],
-    locations: [
-      {
-        title: 'Парк',
-        img: '',
-        roles: ['Бабка']
-      }
-    ],
-    options: {
-      spiesCount: 2, // Количество шпионов
-      roundTime: 480, // Продолжительность раунда
-      voteTime: 15, // Продолжительность голосования
-      briefTime: 10, // Продолжительность перерыва между раундами
-      spyChanceTime: 10 // Время на выбор локации шпионом после его разоблачения
-    },
-    isRunning: true, // Флаг того, что партия продолжается
-    state: {
-      startMoment: null,
-      isRunning: true, // Флаг того, что раунд продолжается
-      roles: []
-    }
-  } */
-
+  const originOptions = JSON.parse(res.data.options)
+  const room = new SpyRoom(roomId, originOptions.owner, originOptions.options, originOptions.locations)
   getRooms().push(room)
   return room
 }
@@ -95,38 +73,59 @@ export default function Svc (socket, io) {
       if (!room && await Room.findOne({ _id: roomId }) !== null) {
         room = await prepareRoom(roomId)
       }
-      if (room.users.some(user => user.username === username)) {
-        username += additionalUsernameChar
+      // Добавляем пользователя в комнату
+      const res = room.addUser(username)
+      if (res.wasRenamed) {
+        username = res.username
         socket.emit('rename', { data: username })
       }
-      room.users.push({
-        username,
-        isWatcher: true
-      })
-      const namespace = `spy/${roomId}/${username}`
-      consolaGlobalInstance.log(namespace)
+      // Подписываем пользователя на событие отключения
       socket.once('disconnect', () => {
         spySvc.leaveRoom({ roomId, username })
       })
-      socket.emit('locations', { data: room.locations })
+      // Подключаем сокет пользователя к персональному каналу
+      const namespace = `spy/${roomId}/${username}`
       socket.join(namespace)
+      // Пересылаем пользователю данные об игре
+      socket.emit('locations', { data: room.locations })
+      // Извещаем всех пользователей в комнате о прибытии нового пользователя
       spam('users', { data: room.users }, room, socket)
-      consolaGlobalInstance.log(`${username} joined to room ${roomId}`)
+      consolaGlobalInstance.log('SPY: ', `${username} joined to room ${roomId}`)
     },
     leaveRoom ({ roomId, username }) {
       const room = getRoom(roomId)
       if (!room) {
-        throw new Error(`room ${roomId} not found`)
+        return
+        // throw new Error(`${username} tried to disconnect unexisting or uncreated room ${roomId}`)
       }
-
-      const userId = room.users.findIndex(user => user.username === username)
-      if (userId !== -1) {
-        room.users.splice(userId, 1)
+      // Удаляем пользователя из комнаты
+      const res = room.removeUser(username)
+      if (!res.wasRenamed) {
+        return
+        // throw new Error(`${username} tried to disconnect room ${roomId}, but was not even here`)
       }
-
+      // Отключаем пользователя от персонального канала
       const namespace = `spy/${roomId}/${username}`
       socket.leave(namespace)
+      // Извещаем всех пользователей в комнате об уходе пользователя
       spam('users', { data: room.users }, room, socket)
+      consolaGlobalInstance.log('SPY: ', `${username} left room ${roomId}`)
+    },
+    become ({ roomId, username, becomeWatcher }) {
+      const room = getRoom(roomId)
+      if (!room) {
+        return
+        // throw new Error(`${username} tried to become player or watcher in unexisting or uncreated room ${roomId}`)
+      }
+      // Переназначаем роль пользователя
+      if (becomeWatcher) {
+        room.makeUserWatcher(username)
+      } else {
+        room.makeUserPlayer(username)
+      }
+      // Извещаем всех в комнате о смене роли пользователя
+      spam('users', { data: room.users }, room, socket)
+      consolaGlobalInstance.log('SPY: ', `${username} became ${becomeWatcher ? 'watcher' : 'player'} in room ${roomId}`)
     }
   })
   return spySvc

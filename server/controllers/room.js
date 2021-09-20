@@ -3,10 +3,8 @@ const Room = require('../models/room.js')
 
 module.exports.checkRoom = async function (req, res) {
   const roomId = req.query.roomId
-  consolaGlobalInstance.log(req.query)
   try {
     const room = await Room.findOne({ _id: roomId })
-    consolaGlobalInstance.log('room: ', room)
     res.status(200).json({
       exists: (room !== null)
     })

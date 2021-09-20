@@ -39,7 +39,10 @@ export default {
           title: location.title,
           img: location.img,
           roles: location.roles
-        }))
+        })),
+        options: {
+          spiesCount: 1
+        }
       }
       const res = await this.$back.posts.createRoom({
         originOptions,
