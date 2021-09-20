@@ -30,6 +30,13 @@ module.exports = class SpyRoom {
       isRunning: false,
       players: []
     }
+    this.#makeUser = function (username, makeWatcher) {
+      this.#users.forEach(function (user, index) {
+        if (this[index].username === username) {
+          this[index].isWatcher = makeWatcher
+        }
+      }, this.#users)
+    }
   }
 
   addUser (username) {
@@ -67,13 +74,7 @@ module.exports = class SpyRoom {
     this.#makeUser(username, false)
   }
 
-  #makeUser (username, makeWatcher) {
-    this.#users.forEach(function (user, index) {
-      if (this[index].username === username) {
-        this[index].isWatcher = makeWatcher
-      }
-    }, this.#users)
-  }
+  #makeUser
 
   get id () {
     return this.#id

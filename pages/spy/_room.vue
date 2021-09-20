@@ -95,6 +95,7 @@ export default {
       channel: '/spy',
       serverAPI: true
     })
+    consolaGlobalInstance.log(this.socket)
   },
   methods: {
     joinRoom () {

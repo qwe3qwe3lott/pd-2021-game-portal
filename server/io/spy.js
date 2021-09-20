@@ -100,7 +100,7 @@ export default function Svc (socket, io) {
       }
       // Удаляем пользователя из комнаты
       const res = room.removeUser(username)
-      if (!res.wasRenamed) {
+      if (!res.wasRemoved) {
         return
         // throw new Error(`${username} tried to disconnect room ${roomId}, but was not even here`)
       }
