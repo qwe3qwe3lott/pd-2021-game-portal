@@ -2,7 +2,7 @@
   <div>
     <h1>Комната {{ $route.params.room }}</h1>
     <div class="temp-container">
-      <button @click="become(true)">
+      <button :disabled="gameIsRunning" @click="become(true)">
         Зрители
       </button>
       <div v-for="(user, index) in watchers" :key="index">
@@ -11,13 +11,17 @@
     </div>
     <br>
     <div class="temp-container">
-      <button @click="become(false)">
+      <button :disabled="gameIsRunning" @click="become(false)">
         Игроки
       </button>
       <div v-for="(user, index) in players" :key="index">
         {{ user.username }}{{ (user.isOwner ? ' (owner)' : '') }}
       </div>
     </div>
+    <br>
+    <button v-if="iAmOwner" @click="startGame">
+      Начать игру
+    </button>
     <br>
     <div class="temp-container">
       <b>Локации</b>
@@ -48,11 +52,16 @@ export default {
       users: [],
       locations: [],
       roomId: this.$route.params.room,
+      ownerKey: '',
+      gameIsRunning: false,
       ioApi: {},
       ioData: {}
     }
   },
   computed: {
+    iAmOwner () {
+      return (this.myUser ?? {}).isOwner
+    },
     myUser () {
       return this.users.find(user => user.username === this.username)
     },
@@ -87,6 +96,24 @@ export default {
     'ioData.locations' (locations) {
       consolaGlobalInstance.log('locations', locations)
       this.locations = locations
+    },
+    'ioData.ownerKey' (ownerKey) {
+      consolaGlobalInstance.log('ownerKey', ownerKey)
+      this.ownerKey = ownerKey
+    },
+    'ioData.gameStart' (payload) {
+      this.gameIsRunning = true
+      consolaGlobalInstance.log('gameStart', payload)
+    },
+    'ioData.gameOver' (payload) {
+      this.gameIsRunning = false
+      consolaGlobalInstance.log('gameOver', payload)
+    },
+    'ioData.roundStart' (payload) {
+      consolaGlobalInstance.log('roundStart', payload)
+    },
+    'ioData.roundOver' (payload) {
+      consolaGlobalInstance.log('roundOver', payload)
     }
   },
   mounted () {
@@ -110,6 +137,12 @@ export default {
         roomId: this.roomId,
         username: this.username,
         becomeWatcher
+      })
+    },
+    startGame () {
+      this.ioApi.startGame({
+        roomId: this.roomId,
+        ownerKey: this.ownerKey
       })
     }
   }

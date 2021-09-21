@@ -16,6 +16,21 @@ const API = {
     },
     locations: {
       data: [{}]
+    },
+    ownerKey: {
+      data: ''
+    },
+    gameStart: {
+      data: {}
+    },
+    gameOver: {
+      data: {}
+    },
+    roundStart: {
+      data: {}
+    },
+    roundOver: {
+      data: {}
     }
   },
   methods: {
@@ -39,6 +54,12 @@ const API = {
         roomId: '',
         username: '',
         becomeWatcher: ''
+      }
+    },
+    startGame: {
+      msg: {
+        roomId: '',
+        ownerKey: ''
       }
     }
   }
@@ -72,6 +93,26 @@ export default function Svc (socket, io) {
       // Если комната есть в БД, но нет в ОЗУ
       if (!room && await Room.findOne({ _id: roomId }) !== null) {
         room = await prepareRoom(roomId)
+        // Подписываемся на события комнаты
+        room.eventOwnerJoined.subscribe((sender, payload) => {
+          socket.emit('ownerKey', { data: payload.ownerKey })
+        })
+        room.eventGameStarted.subscribe((sender, payload) => {
+          spam('gameStart', { data: {} }, room, socket)
+          consolaGlobalInstance.log('SPY: ', `Game in room ${roomId} started`)
+        })
+        room.eventGameOvered.subscribe((sender, payload) => {
+          spam('gameOver', { data: {} }, room, socket)
+          consolaGlobalInstance.log('SPY: ', `Game in room ${roomId} overed`)
+        })
+        room.eventRoundStarted.subscribe((sender, payload) => {
+          spam('roundStart', { data: {} }, room, socket)
+          consolaGlobalInstance.log('SPY: ', `Round in room ${roomId} overed`)
+        })
+        room.eventRoundOvered.subscribe((sender, payload) => {
+          spam('roundOver', { data: {} }, room, socket)
+          consolaGlobalInstance.log('SPY: ', `Round in room ${roomId} started`)
+        })
       }
       // Добавляем пользователя в комнату
       const res = room.addUser(username)
@@ -117,6 +158,9 @@ export default function Svc (socket, io) {
         return
         // throw new Error(`${username} tried to become player or watcher in unexisting or uncreated room ${roomId}`)
       }
+      if (room.isRunning) {
+        return
+      }
       // Переназначаем роль пользователя
       if (becomeWatcher) {
         room.makeUserWatcher(username)
@@ -126,6 +170,14 @@ export default function Svc (socket, io) {
       // Извещаем всех в комнате о смене роли пользователя
       spam('users', { data: room.users }, room, socket)
       consolaGlobalInstance.log('SPY: ', `${username} became ${becomeWatcher ? 'watcher' : 'player'} in room ${roomId}`)
+    },
+    startGame ({ roomId, ownerKey }) {
+      const room = getRoom(roomId)
+      if (!room) {
+        return
+        // throw new Error(`unexisting or uncreated room ${roomId} was tried to start`)
+      }
+      room.startGame(ownerKey)
     }
   })
   return spySvc

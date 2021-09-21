@@ -3,7 +3,7 @@
     <div v-if="!username">
       <h1>Введите ваш ник</h1>
       <form @submit.prevent="submitUsername">
-        <input v-model="usernameField" type="text">
+        <input v-model.trim="usernameField" type="text" minlength="1">
         <input type="submit">
       </form>
     </div>
