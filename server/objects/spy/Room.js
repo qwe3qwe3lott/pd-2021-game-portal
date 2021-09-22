@@ -12,6 +12,8 @@ module.exports = class SpyRoom {
   #locations
   #options
   #state
+  #eventUsersChanged
+  #eventUserRenamed
   #eventOwnerJoined
   #eventGameStarted
   #eventGameOvered
@@ -44,6 +46,8 @@ module.exports = class SpyRoom {
       players: []
     }
 
+    this.#eventUsersChanged = new MyEvent(this)
+    this.#eventUserRenamed = new MyEvent(this)
     this.#eventOwnerJoined = new MyEvent(this)
     this.#eventGameStarted = new MyEvent(this)
     this.#eventGameOvered = new MyEvent(this)
@@ -53,23 +57,31 @@ module.exports = class SpyRoom {
     this.#timer = new Timer()
   }
 
-  addUser (username) {
-    let wasRenamed = false
+  addUser (username, socket) {
     if (this.#users.some(user => user.username === username)) {
-      username += SpyRoom.#additionalUsernameChar
-      wasRenamed = true
+      const oldUsername = username
+      while (this.#users.some(user => user.username === username)) {
+        username += SpyRoom.#additionalUsernameChar
+      }
+      this.#eventUserRenamed.notify({
+        socket,
+        oldUsername,
+        newUsername: username
+      })
     }
+    const isOwner = (username === this.#owner)
     this.#users.push({
       username,
       isWatcher: true,
-      isOwner: (username === this.#owner)
+      isOwner
     })
-    this.#eventOwnerJoined.notify({
-      ownerKey: this.#ownerKey
+    this.#eventUsersChanged.notify({
+      users: this.#users
     })
-    return {
-      username,
-      wasRenamed
+    if (isOwner) {
+      this.#eventOwnerJoined.notify({
+        ownerKey: this.#ownerKey
+      })
     }
   }
 
@@ -77,9 +89,9 @@ module.exports = class SpyRoom {
     const userId = this.#users.findIndex(user => user.username === username)
     if (userId !== -1) {
       this.#users.splice(userId, 1)
-    }
-    return {
-      wasRemoved: (userId !== -1)
+      this.#eventUsersChanged.notify({
+        users: this.#users
+      })
     }
   }
 
@@ -92,11 +104,14 @@ module.exports = class SpyRoom {
   }
 
   #makeUser = (username, makeWatcher) => {
-    this.#users.forEach(function (user, index) {
-      if (this[index].username === username) {
-        this[index].isWatcher = makeWatcher
+    for (let i = 0; i < this.#users.length; i++) {
+      if (this.#users[i].username === username) {
+        this.#users[i].isWatcher = makeWatcher
+        this.#eventUsersChanged.notify({
+          users: this.#users
+        })
       }
-    }, this.#users)
+    }
   }
 
   async startGame (ownerKey) {
@@ -127,12 +142,14 @@ module.exports = class SpyRoom {
   }
 
   #playersCount = () => this.#users.filter(user => !user.isWatcher).length
-  #watchersCount = () => this.#users.filter(user => user.isWatcher).length
 
   get id () { return this.#id }
+  get owner () { return this.#owner }
   get isRunning () { return this.#isRunning }
   get users () { return this.#users }
   get locations () { return this.#locations }
+  get eventUsersChanged () { return this.#eventUsersChanged }
+  get eventUserRenamed () { return this.#eventUserRenamed }
   get eventOwnerJoined () { return this.#eventOwnerJoined }
   get eventGameStarted () { return this.#eventGameStarted }
   get eventGameOvered () { return this.#eventGameOvered }

@@ -3,7 +3,7 @@
     <div v-if="!username">
       <h1>Введите ваш ник</h1>
       <form @submit.prevent="submitUsername">
-        <input v-model.trim="usernameField" type="text" minlength="1">
+        <input v-model.trim="usernameField" type="text" minlength="1" maxlength="30">
         <input type="submit">
       </form>
     </div>
@@ -13,7 +13,7 @@
 
 <script>
 export default {
-  name: 'gameLayout',
+  name: 'GameLayout',
   data () {
     return {
       usernameField: ''

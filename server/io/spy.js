@@ -43,12 +43,6 @@ const API = {
         username: ''
       }
     },
-    leaveRoom: {
-      msg: {
-        roomId: '',
-        username: ''
-      }
-    },
     become: {
       msg: {
         roomId: '',
@@ -73,15 +67,9 @@ const prepareRoom = async (roomId) => {
   return room
 }
 
+const getNamespace = (roomId, username) => `spy/${roomId}/${username}`
 const getRooms = () => Data.rooms.spy
 const getRoom = roomId => Data.rooms.spy.find(room => room.id === roomId)
-
-const spam = (event, data, room, socket) => {
-  for (const user of room.users) {
-    socket.to(`spy/${room.id}/${user.username}`).emit(event, data)
-  }
-  socket.emit(event, data)
-}
 
 export default function Svc (socket, io) {
   const spySvc = Object.freeze({
@@ -89,68 +77,60 @@ export default function Svc (socket, io) {
       return API
     },
     async joinRoom ({ roomId, username }) {
+      socket.username = username
       let room = getRoom(roomId)
       // Если комната есть в БД, но нет в ОЗУ
       if (!room && await Room.findOne({ _id: roomId }) !== null) {
         room = await prepareRoom(roomId)
-        // Подписываемся на события комнаты
-        room.eventOwnerJoined.subscribe((sender, payload) => {
-          socket.emit('ownerKey', { data: payload.ownerKey })
-        })
-        room.eventGameStarted.subscribe((sender, payload) => {
-          spam('gameStart', { data: {} }, room, socket)
-          consolaGlobalInstance.log('SPY: ', `Game in room ${roomId} started`)
-        })
-        room.eventGameOvered.subscribe((sender, payload) => {
-          spam('gameOver', { data: {} }, room, socket)
-          consolaGlobalInstance.log('SPY: ', `Game in room ${roomId} overed`)
-        })
-        room.eventRoundStarted.subscribe((sender, payload) => {
-          spam('roundStart', { data: {} }, room, socket)
-          consolaGlobalInstance.log('SPY: ', `Round in room ${roomId} overed`)
-        })
-        room.eventRoundOvered.subscribe((sender, payload) => {
-          spam('roundOver', { data: {} }, room, socket)
-          consolaGlobalInstance.log('SPY: ', `Round in room ${roomId} started`)
-        })
       }
+      // Подписываемся на события комнаты
+      const usersChangedHandler = room.eventUsersChanged.subscribe((sender, payload) => {
+        socket.emit('users', { data: payload.users })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got users list')
+      })
+      const userRenamedHandler = room.eventUserRenamed.subscribe((sender, payload) => {
+        if (socket !== payload.socket) {
+          return
+        }
+        socket.username = payload.newUsername
+        socket.leave(getNamespace(sender.id, payload.oldUsername))
+        socket.join(getNamespace(sender.id, payload.newUsername))
+        socket.emit('rename', { data: payload.newUsername })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got new username')
+      })
+      const ownerJoinedHandler = room.eventOwnerJoined.subscribe((sender, payload) => {
+        if (socket.username !== sender.owner) {
+          return
+        }
+        socket.emit('ownerKey', { data: payload.ownerKey })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got owner key')
+      })
+      const gameStartedHandler = room.eventGameStarted.subscribe((sender, payload) => {
+        socket.emit('gameStart', { data: {} })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), `Game in room ${roomId} started`)
+      })
+      const gameOveredHandler = room.eventGameOvered.subscribe((sender, payload) => {
+        socket.emit('gameOver', { data: {} })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), `Game in room ${roomId} overed`)
+      })
       // Добавляем пользователя в комнату
-      const res = room.addUser(username)
-      if (res.wasRenamed) {
-        username = res.username
-        socket.emit('rename', { data: username })
-      }
+      room.addUser(username, socket)
       // Подписываем пользователя на событие отключения
       socket.once('disconnect', () => {
-        spySvc.leaveRoom({ roomId, username })
+        room.removeUser(socket.username)
+        room.eventUsersChanged.describe(usersChangedHandler)
+        room.eventUserRenamed.describe(userRenamedHandler)
+        room.eventOwnerJoined.describe(ownerJoinedHandler)
+        room.eventGameStarted.describe(gameStartedHandler)
+        room.eventGameOvered.describe(gameOveredHandler)
+        socket.leave(getNamespace(roomId, socket.username))
       })
       // Подключаем сокет пользователя к персональному каналу
-      const namespace = `spy/${roomId}/${username}`
-      socket.join(namespace)
+      socket.join(getNamespace(roomId, socket.username))
+      // consolaGlobalInstance.log('lol', socket.nsp.adapter.rooms.get(namespace) !== undefined)
       // Пересылаем пользователю данные об игре
       socket.emit('locations', { data: room.locations })
-      // Извещаем всех пользователей в комнате о прибытии нового пользователя
-      spam('users', { data: room.users }, room, socket)
-      consolaGlobalInstance.log('SPY: ', `${username} joined to room ${roomId}`)
-    },
-    leaveRoom ({ roomId, username }) {
-      const room = getRoom(roomId)
-      if (!room) {
-        return
-        // throw new Error(`${username} tried to disconnect unexisting or uncreated room ${roomId}`)
-      }
-      // Удаляем пользователя из комнаты
-      const res = room.removeUser(username)
-      if (!res.wasRemoved) {
-        return
-        // throw new Error(`${username} tried to disconnect room ${roomId}, but was not even here`)
-      }
-      // Отключаем пользователя от персонального канала
-      const namespace = `spy/${roomId}/${username}`
-      socket.leave(namespace)
-      // Извещаем всех пользователей в комнате об уходе пользователя
-      spam('users', { data: room.users }, room, socket)
-      consolaGlobalInstance.log('SPY: ', `${username} left room ${roomId}`)
+      consolaGlobalInstance.log(getNamespace(roomId, socket.username), ': Got locations')
     },
     become ({ roomId, username, becomeWatcher }) {
       const room = getRoom(roomId)
@@ -167,9 +147,7 @@ export default function Svc (socket, io) {
       } else {
         room.makeUserPlayer(username)
       }
-      // Извещаем всех в комнате о смене роли пользователя
-      spam('users', { data: room.users }, room, socket)
-      consolaGlobalInstance.log('SPY: ', `${username} became ${becomeWatcher ? 'watcher' : 'player'} in room ${roomId}`)
+      // consolaGlobalInstance.log(getNamespace(roomId, socket.username), `: Became ${becomeWatcher ? 'watcher' : 'player'}`)
     },
     startGame ({ roomId, ownerKey }) {
       const room = getRoom(roomId)

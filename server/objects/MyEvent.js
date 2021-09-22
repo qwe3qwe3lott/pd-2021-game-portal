@@ -9,6 +9,7 @@ module.exports = class MyEvent {
 
   subscribe (listener) {
     this.#listeners.push(listener)
+    return listener
   }
 
   describe (listener) {
@@ -20,11 +21,9 @@ module.exports = class MyEvent {
 
   notify (payload) {
     for (const listener of this.#listeners) {
-      listener(this.#sender, payload)
+      if (listener !== null) {
+        listener(this.#sender, payload)
+      }
     }
-  }
-
-  clear () {
-    this.#listeners = []
   }
 }
