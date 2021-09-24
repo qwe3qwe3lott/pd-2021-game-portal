@@ -14,18 +14,33 @@
       <button :disabled="gameIsRunning" @click="become(false)">
         Игроки
       </button>
-      <div v-for="(user, index) in players" :key="index">
+      <div v-for="(user, index) in (gameIsRunning ? players : playersFromUsers)" :key="index">
         {{ user.username }}{{ (user.isOwner ? ' (owner)' : '') }}
       </div>
     </div>
     <br>
-    <button v-if="iAmOwner" @click="startGame">
-      Начать игру
-    </button>
+    <div v-if="iAmOwner" class="temp-container">
+      <b>Панель владельца</b>
+      <button :disabled="gameIsRunning && !gameIsOnPause" @click="startOrResumeGame">
+        {{ (gameIsRunning ? 'Возобновить игру' : 'Начать игру') }}
+      </button>
+      <button :disabled="!gameIsRunning || gameIsOnPause" @click="pauseGame">
+        Приостановить игру
+      </button>
+      <button :disabled="!gameIsRunning" @click="stopGame">
+        Закончить игру
+      </button>
+    </div>
+    <br>
+    <div v-if="gameIsRunning" class="temp-container">
+      <b>Текущая игра</b>
+      <i>Роль: {{ player ? (player.isSpy ? 'Шпион' : player.role) : '' }}</i>
+      <i>Локация: {{ location ? location.title : '???' }}</i>
+    </div>
     <br>
     <div class="temp-container">
       <b>Локации</b>
-      <LocationCard v-for="(location, index) in locations" :key="index" :location="location" />
+      <LocationCard v-for="(loc, index) in locations" :key="index" :location="loc" />
     </div>
     <br>
     <nuxt-link :to="'/'">
@@ -52,8 +67,13 @@ export default {
       users: [],
       locations: [],
       roomId: this.$route.params.room,
+      roundId: null,
       ownerKey: '',
       gameIsRunning: false,
+      gameIsOnPause: false,
+      player: null,
+      players: [],
+      location: null,
       ioApi: {},
       ioData: {}
     }
@@ -68,7 +88,7 @@ export default {
     watchers () {
       return this.users.filter(user => user.isWatcher)
     },
-    players () {
+    playersFromUsers () {
       return this.users.filter(user => !user.isWatcher)
     },
     username: {
@@ -84,30 +104,44 @@ export default {
       this.joinRoom()
     },
     'ioData.users' (users) {
-      consolaGlobalInstance.log('users', users)
       this.users = users
+      consolaGlobalInstance.log('users', users)
     },
     'ioData.rename' (username) {
-      consolaGlobalInstance.log('username', username)
-      if (username !== '') {
-        this.username = username
-      }
+      this.username = username
+      consolaGlobalInstance.log('rename', username)
     },
     'ioData.locations' (locations) {
-      consolaGlobalInstance.log('locations', locations)
       this.locations = locations
+      consolaGlobalInstance.log('locations', locations)
     },
     'ioData.ownerKey' (ownerKey) {
-      consolaGlobalInstance.log('ownerKey', ownerKey)
       this.ownerKey = ownerKey
+      consolaGlobalInstance.log('ownerKey', ownerKey)
     },
-    'ioData.gameStart' (payload) {
-      this.gameIsRunning = true
-      consolaGlobalInstance.log('gameStart', payload)
+    'ioData.gameRunningFlag' (gameRunningFlag) {
+      this.gameIsRunning = gameRunningFlag
+      consolaGlobalInstance.log('gameIsRunning', gameRunningFlag)
     },
-    'ioData.gameOver' (payload) {
-      this.gameIsRunning = false
-      consolaGlobalInstance.log('gameOver', payload)
+    'ioData.gamePauseFlag' (gamePauseFlag) {
+      this.gameIsOnPause = gamePauseFlag
+      consolaGlobalInstance.log('gameIsOnPause', gamePauseFlag)
+    },
+    'ioData.roundId' (roundId) {
+      this.roundId = roundId
+      consolaGlobalInstance.log('roundId', roundId)
+    },
+    'ioData.players' (players) {
+      this.players = players
+      consolaGlobalInstance.log('players', players)
+    },
+    'ioData.player' (player) {
+      this.player = player
+      consolaGlobalInstance.log('player', player)
+    },
+    'ioData.location' (location) {
+      this.location = location
+      consolaGlobalInstance.log('location', location)
     },
     'ioData.roundStart' (payload) {
       consolaGlobalInstance.log('roundStart', payload)
@@ -139,8 +173,20 @@ export default {
         becomeWatcher
       })
     },
-    startGame () {
-      this.ioApi.startGame({
+    startOrResumeGame () {
+      this.ioApi.startOrResumeGame({
+        roomId: this.roomId,
+        ownerKey: this.ownerKey
+      })
+    },
+    pauseGame () {
+      this.ioApi.pauseGame({
+        roomId: this.roomId,
+        ownerKey: this.ownerKey
+      })
+    },
+    stopGame () {
+      this.ioApi.stopGame({
         roomId: this.roomId,
         ownerKey: this.ownerKey
       })

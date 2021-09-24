@@ -9,28 +9,41 @@ const API = {
   version: 1.0,
   evts: {
     rename: {
-      data: ''
+      data: undefined
     },
     users: {
-      data: [{}]
+      data: undefined
     },
     locations: {
-      data: [{}]
+      data: undefined
     },
     ownerKey: {
-      data: ''
+      data: undefined
     },
-    gameStart: {
-      data: {}
+    gameRunningFlag: {
+      data: undefined
     },
-    gameOver: {
-      data: {}
+    gamePauseFlag: {
+      data: undefined
     },
+    roundId: {
+      data: undefined
+    },
+    players: {
+      data: undefined
+    },
+    player: {
+      data: undefined
+    },
+    location: {
+      data: undefined
+    },
+    // Убрать эти два
     roundStart: {
-      data: {}
+      data: undefined
     },
     roundOver: {
-      data: {}
+      data: undefined
     }
   },
   methods: {
@@ -50,7 +63,19 @@ const API = {
         becomeWatcher: ''
       }
     },
-    startGame: {
+    startOrResumeGame: {
+      msg: {
+        roomId: '',
+        ownerKey: ''
+      }
+    },
+    pauseGame: {
+      msg: {
+        roomId: '',
+        ownerKey: ''
+      }
+    },
+    stopGame: {
       msg: {
         roomId: '',
         ownerKey: ''
@@ -89,9 +114,7 @@ export default function Svc (socket, io) {
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got users list')
       })
       const userRenamedHandler = room.eventUserRenamed.subscribe((sender, payload) => {
-        if (socket !== payload.socket) {
-          return
-        }
+        if (socket !== payload.socket) { return }
         socket.username = payload.newUsername
         socket.leave(getNamespace(sender.id, payload.oldUsername))
         socket.join(getNamespace(sender.id, payload.newUsername))
@@ -99,19 +122,38 @@ export default function Svc (socket, io) {
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got new username')
       })
       const ownerJoinedHandler = room.eventOwnerJoined.subscribe((sender, payload) => {
-        if (socket.username !== sender.owner) {
-          return
-        }
+        if (socket.username !== sender.owner) { return }
         socket.emit('ownerKey', { data: payload.ownerKey })
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got owner key')
       })
       const gameStartedHandler = room.eventGameStarted.subscribe((sender, payload) => {
-        socket.emit('gameStart', { data: {} })
-        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), `Game in room ${roomId} started`)
+        socket.emit('gameRunningFlag', { data: true })
+        socket.emit('players', { data: payload.players })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game started')
       })
       const gameOveredHandler = room.eventGameOvered.subscribe((sender, payload) => {
-        socket.emit('gameOver', { data: {} })
-        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), `Game in room ${roomId} overed`)
+        socket.emit('gameRunningFlag', { data: false })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game overed')
+      })
+      const roundStartedHandler = room.eventRoundStarted.subscribe((sender, payload) => {
+        const player = payload.players.find(player => player.username === socket.username)
+        if (!player) { return }
+        socket.emit('roundId', { data: payload.roundId })
+        socket.emit('player', { data: player })
+        socket.emit('location', { data: (player.isSpy ? null : payload.location) })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Round started')
+      })
+      const roundOveredHandler = room.eventRoundOvered.subscribe((sender, payload) => {
+        socket.emit('roundOver', { data: {} })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Round overed')
+      })
+      const gamePausedHandler = room.eventGamePaused.subscribe((sender, payload) => {
+        socket.emit('gamePauseFlag', { data: true })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game paused')
+      })
+      const gameResumedHandler = room.eventGameResumed.subscribe((sender, payload) => {
+        socket.emit('gamePauseFlag', { data: false })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game resumed')
       })
       // Добавляем пользователя в комнату
       room.addUser(username, socket)
@@ -123,11 +165,14 @@ export default function Svc (socket, io) {
         room.eventOwnerJoined.describe(ownerJoinedHandler)
         room.eventGameStarted.describe(gameStartedHandler)
         room.eventGameOvered.describe(gameOveredHandler)
+        room.eventRoundStarted.describe(roundStartedHandler)
+        room.eventRoundOvered.describe(roundOveredHandler)
+        room.eventGamePaused.describe(gamePausedHandler)
+        room.eventGameResumed.describe(gameResumedHandler)
         socket.leave(getNamespace(roomId, socket.username))
       })
       // Подключаем сокет пользователя к персональному каналу
       socket.join(getNamespace(roomId, socket.username))
-      // consolaGlobalInstance.log('lol', socket.nsp.adapter.rooms.get(namespace) !== undefined)
       // Пересылаем пользователю данные об игре
       socket.emit('locations', { data: room.locations })
       consolaGlobalInstance.log(getNamespace(roomId, socket.username), ': Got locations')
@@ -149,13 +194,31 @@ export default function Svc (socket, io) {
       }
       // consolaGlobalInstance.log(getNamespace(roomId, socket.username), `: Became ${becomeWatcher ? 'watcher' : 'player'}`)
     },
-    startGame ({ roomId, ownerKey }) {
+    startOrResumeGame ({ roomId, ownerKey }) {
       const room = getRoom(roomId)
       if (!room) {
         return
         // throw new Error(`unexisting or uncreated room ${roomId} was tried to start`)
       }
-      room.startGame(ownerKey)
+      if (room.isRunning) {
+        room.resume(ownerKey)
+      } else {
+        room.startGame(ownerKey)
+      }
+    },
+    pauseGame ({ roomId, ownerKey }) {
+      const room = getRoom(roomId)
+      if (!room) {
+        return
+      }
+      room.pause(ownerKey)
+    },
+    stopGame ({ roomId, ownerKey }) {
+      const room = getRoom(roomId)
+      if (!room) {
+        return
+      }
+      room.stop(ownerKey)
     }
   })
   return spySvc
