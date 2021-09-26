@@ -1,6 +1,9 @@
 <template>
   <div>
-    {{ location.title }}
+    <b>{{ location.title }}</b>
+    <button v-if="spy" @click="$emit('pinpoint', location)">
+      Указать
+    </button>
   </div>
 </template>
 
@@ -8,7 +11,16 @@
 export default {
   name: 'LocationCard',
   props: {
-    location: Object
+    location: {
+      type: Object,
+      default: () => {
+        return {
+          title: 'void',
+          img: ''
+        }
+      }
+    },
+    spy: Boolean
   }
 }
 </script>

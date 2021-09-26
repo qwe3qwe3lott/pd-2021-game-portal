@@ -15,7 +15,7 @@
         Игроки
       </button>
       <div v-for="(user, index) in (gameIsRunning ? players : playersFromUsers)" :key="index">
-        {{ user.username }}{{ (user.isOwner ? ' (owner)' : '') }}
+        {{ user.username }}{{ (user.isOwner ? ' (owner)' : '') }}{{ ` (score: ${user.score ? user.score : 0})` }}
       </div>
     </div>
     <br>
@@ -33,14 +33,22 @@
     </div>
     <br>
     <div v-if="gameIsRunning" class="temp-container">
-      <b>Текущая игра</b>
-      <i>Роль: {{ player ? (player.isSpy ? 'Шпион' : player.role) : '' }}</i>
-      <i>Локация: {{ location ? location.title : '???' }}</i>
+      <div v-if="gameIsOnBrief">
+        <b>Перерыв между раундами</b>
+      </div>
+      <div v-else-if="iAmWatcher">
+        <b>Вы зритель и не знаете подробностей раунда</b>
+      </div>
+      <div v-else>
+        <b>Текущий раунд</b>
+        <i>Роль: {{ player ? (player.isSpy ? 'Шпион' : player.role) : '' }}</i>
+        <i>Локация: {{ location ? location.title : '???' }}</i>
+      </div>
     </div>
     <br>
     <div class="temp-container">
       <b>Локации</b>
-      <LocationCard v-for="(loc, index) in locations" :key="index" :location="loc" />
+      <LocationCard v-for="(loc, index) in locations" :key="index" :location="loc" :spy="gameIsRunning && !gameIsOnPause && !gameIsOnBrief && (player ? player.isSpy : false)" @pinpoint="pinpointLocation" />
     </div>
     <br>
     <nuxt-link :to="'/'">
@@ -71,6 +79,7 @@ export default {
       ownerKey: '',
       gameIsRunning: false,
       gameIsOnPause: false,
+      gameIsOnBrief: false,
       player: null,
       players: [],
       location: null,
@@ -81,6 +90,9 @@ export default {
   computed: {
     iAmOwner () {
       return (this.myUser ?? {}).isOwner
+    },
+    iAmWatcher () {
+      return (this.myUser ?? {}).isWatcher
     },
     myUser () {
       return this.users.find(user => user.username === this.username)
@@ -98,9 +110,7 @@ export default {
   },
   watch: {
     'ioApi.ready' () {
-      if (!this.username) {
-        return
-      }
+      if (!this.username) { return }
       this.joinRoom()
     },
     'ioData.users' (users) {
@@ -127,6 +137,10 @@ export default {
       this.gameIsOnPause = gamePauseFlag
       consolaGlobalInstance.log('gameIsOnPause', gamePauseFlag)
     },
+    'ioData.gameBriefFlag' (gameBriefFlag) {
+      this.gameIsOnBrief = gameBriefFlag
+      consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag)
+    },
     'ioData.roundId' (roundId) {
       this.roundId = roundId
       consolaGlobalInstance.log('roundId', roundId)
@@ -142,12 +156,6 @@ export default {
     'ioData.location' (location) {
       this.location = location
       consolaGlobalInstance.log('location', location)
-    },
-    'ioData.roundStart' (payload) {
-      consolaGlobalInstance.log('roundStart', payload)
-    },
-    'ioData.roundOver' (payload) {
-      consolaGlobalInstance.log('roundOver', payload)
     }
   },
   mounted () {
@@ -166,7 +174,7 @@ export default {
       })
     },
     become (becomeWatcher) {
-      if (this.myUser.isWatcher === becomeWatcher) { return }
+      if (this.gameIsRunning || this.myUser.isWatcher === becomeWatcher) { return }
       this.ioApi.become({
         roomId: this.roomId,
         username: this.username,
@@ -174,21 +182,34 @@ export default {
       })
     },
     startOrResumeGame () {
+      if (!this.ownerKey) { return }
       this.ioApi.startOrResumeGame({
         roomId: this.roomId,
         ownerKey: this.ownerKey
       })
     },
     pauseGame () {
+      if (!this.gameIsRunning || !this.ownerKey) { return }
       this.ioApi.pauseGame({
         roomId: this.roomId,
         ownerKey: this.ownerKey
       })
     },
     stopGame () {
+      if (!this.gameIsRunning || !this.ownerKey) { return }
       this.ioApi.stopGame({
         roomId: this.roomId,
         ownerKey: this.ownerKey
+      })
+    },
+    pinpointLocation (location) {
+      if (!this.gameIsRunning || !this.player || !this.player.spyKey) { return }
+      this.ioApi.pinpointLocation({
+        roomId: this.roomId,
+        username: this.username,
+        spyKey: this.player.spyKey,
+        location,
+        roundId: this.roundId
       })
     }
   }

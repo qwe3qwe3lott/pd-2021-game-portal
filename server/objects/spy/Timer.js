@@ -1,4 +1,4 @@
-const consolaGlobalInstance = require('consola')
+// const consolaGlobalInstance = require('consola')
 module.exports = class Timer {
   #timerId
   #reject
@@ -13,10 +13,8 @@ module.exports = class Timer {
   }
 
   run (delay) {
-    if (this.#isRunning) {
-      return
-    }
-    consolaGlobalInstance.log('timer', 'run')
+    if (this.#isRunning) { return }
+    // consolaGlobalInstance.log('timer', 'run')
     this.#isRunning = true
     this.#delay = delay
     this.#startMoment = new Date().getTime()
@@ -32,7 +30,7 @@ module.exports = class Timer {
 
   stop () {
     if (this.#isRunning) {
-      consolaGlobalInstance.log('timer', 'stop')
+      // consolaGlobalInstance.log('timer', 'stop')
       clearTimeout(this.#timerId)
       this.#reject({
         isStopped: true
@@ -43,7 +41,7 @@ module.exports = class Timer {
 
   pause () {
     if (this.#isRunning && !this.#isOnPause) {
-      consolaGlobalInstance.log('timer', 'pause')
+      // consolaGlobalInstance.log('timer', 'pause')
       clearTimeout(this.#timerId)
       this.#reject({
         isStopped: false,
@@ -55,7 +53,7 @@ module.exports = class Timer {
 
   waitForResume () {
     if (this.#isRunning && this.#isOnPause) {
-      consolaGlobalInstance.log('timer', 'waitForResume')
+      // consolaGlobalInstance.log('timer', 'waitForResume')
       this.#promise = new Promise((resolve, reject) => {
         this.#reject = reject
         this.#timerId = setTimeout(() => {
@@ -69,7 +67,7 @@ module.exports = class Timer {
 
   resume () {
     if (this.#isRunning && this.#isOnPause) {
-      consolaGlobalInstance.log('timer', 'resume')
+      // consolaGlobalInstance.log('timer', 'resume')
       clearTimeout(this.#timerId)
       this.#reject({
         isStopped: false
