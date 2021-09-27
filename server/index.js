@@ -6,6 +6,7 @@ require('dotenv').config()
 require('./config/database')
 
 const RoomRouter = require('./routes/room')
+const UserRouter = require('./routes/user')
 
 const app = express()
 
@@ -37,6 +38,7 @@ app.use(express.json())
 app.use(express.urlencoded())
 
 app.use('/rooms', RoomRouter)
+app.use('/users', UserRouter)
 
 if (require.main === module) {
   start()

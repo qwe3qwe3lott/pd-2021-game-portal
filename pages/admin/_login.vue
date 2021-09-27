@@ -55,8 +55,19 @@ export default {
   methods: {
     validate () {
       if (this.password.length && this.login.length) {
-        consolaGlobalInstance.log('hay')
-        this.$router.push('/admin')
+        consolaGlobalInstance.log('mir')
+        consolaGlobalInstance.log(this.password, this.login)
+        this.$back.getters.checkUser(
+          this.login,
+          this.password
+        ).then(({ data }) => {
+          if (data?.length > 0) {
+            localStorage.setItem('auth', data)
+            this.$router.push('/admin')
+          } else if (data?.exists) {
+            alert('Неверный пароль')
+          }
+        })
       }
     }
   }
@@ -64,7 +75,7 @@ export default {
 </script>
 
 <style scoped>
-.form-auth{
+.form-auth {
   max-width: 500px;
   margin: 0 auto;
 }

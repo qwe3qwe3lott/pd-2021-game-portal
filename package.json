@@ -6,7 +6,7 @@
     "dev": "cross-env NODE_ENV=development nodemon server/index.js --watch server",
     "build": "nuxt build",
     "start": "PORT=3040 nuxt start",
-    "start_dev": "nuxt start",
+    "start_dev": "nuxt build --ignore-path node_modules && SET PORT=3040 && nuxt start",
     "generate": "nuxt generate",
     "lint:js": "eslint --ext \".js,.vue\" --ignore-path .gitignore .",
     "lint": "npm run lint:js"
