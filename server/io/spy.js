@@ -40,6 +40,9 @@ const API = {
     },
     location: {
       data: undefined
+    },
+    timerSeconds: {
+      data: undefined
     }
   },
   methods: {
@@ -133,6 +136,7 @@ export default function Svc (socket, io) {
       })
       const gameOveredHandler = room.eventGameOvered.subscribe((sender, payload) => {
         socket.emit('gameRunningFlag', { data: false })
+        socket.emit('timerSeconds', { data: 0 })
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game overed')
       })
       const roundStartedHandler = room.eventRoundStarted.subscribe((sender, payload) => {
@@ -141,6 +145,7 @@ export default function Svc (socket, io) {
         socket.emit('roundId', { data: payload.roundId })
         socket.emit('player', { data: player })
         socket.emit('location', { data: (player.isSpy ? null : payload.location) })
+        socket.emit('timerSeconds', { data: payload.timerSeconds })
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Round started')
       })
       const roundOveredHandler = room.eventRoundOvered.subscribe((sender, payload) => {
@@ -157,6 +162,7 @@ export default function Svc (socket, io) {
       })
       const briefStartedHandler = room.eventBriefStarted.subscribe((sender, payload) => {
         socket.emit('gameBriefFlag', { data: true })
+        socket.emit('timerSeconds', { data: payload.timerSeconds })
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Brief started')
       })
       const briefOveredHandler = room.eventBriefOvered.subscribe((sender, payload) => {

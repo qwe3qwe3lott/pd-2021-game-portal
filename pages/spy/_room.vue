@@ -15,7 +15,7 @@
         Игроки
       </button>
       <div v-for="(user, index) in (gameIsRunning ? players : playersFromUsers)" :key="index">
-        {{ user.username }}{{ (user.isOwner ? ' (owner)' : '') }}{{ ` (score: ${user.score ? user.score : 0})` }}
+        {{ user.username }}{{ (user.isOwner ? ' (owner)' : '') }}{{ ` (score: ${user.score ? user.score : 0})` }}{{ (gameIsRunning ? (playersFromUsers.some(p => p.username === user.username) ? '' : ' (off)') : '') }}
       </div>
     </div>
     <br>
@@ -31,6 +31,8 @@
         Закончить игру
       </button>
     </div>
+    <br>
+    <Timer :seconds="timerSeconds" />
     <br>
     <div v-if="gameIsRunning" class="temp-container">
       <div v-if="gameIsOnBrief">
@@ -83,6 +85,7 @@ export default {
       player: null,
       players: [],
       location: null,
+      timerSeconds: 0,
       ioApi: {},
       ioData: {}
     }
@@ -156,6 +159,10 @@ export default {
     'ioData.location' (location) {
       this.location = location
       consolaGlobalInstance.log('location', location)
+    },
+    'ioData.timerSeconds' (timerSeconds) {
+      this.timerSeconds = timerSeconds
+      consolaGlobalInstance.log('timerSeconds', timerSeconds)
     }
   },
   mounted () {

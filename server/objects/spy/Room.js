@@ -195,7 +195,8 @@ module.exports = class SpyRoom {
       this.#eventRoundStarted.notify({
         roundId: this.#state.roundId,
         players: this.#state.players,
-        location: this.#state.location
+        location: this.#state.location,
+        timerSeconds: this.#options.roundTime
       })
       // Запуск таймера времени раунда
       const isTimeout = await this.#launchTimer(this.#options.roundTime * 1000)
@@ -216,7 +217,9 @@ module.exports = class SpyRoom {
       // Если кто-то выиграл или владелец остановил игру
       if (this.#victoryCondition() || this.#stopGameFlag) { break }
       this.#isOnBrief = true
-      this.#eventBriefStarted.notify({})
+      this.#eventBriefStarted.notify({
+        timerSeconds: this.#options.briefTime
+      })
       // Запуск таймера времени перерыва между раундами
       await this.#launchTimer(this.#options.briefTime * 1000)
       this.#isOnBrief = false
