@@ -29,6 +29,8 @@ module.exports = class SpyRoom {
   #eventGameResumed
   #timer
   #stopGameFlag
+  #resolve
+  #intervalId
 
   constructor (id, owner, options, locations) {
     this.#id = id
@@ -46,21 +48,25 @@ module.exports = class SpyRoom {
       playerBonusPoints: options.playerBonusPoints ?? 1,
       playerTimeoutPoints: options.playerTimeoutPoints ?? 0,
       winScore: options.winScore ?? 10,
-      roundTime: options.roundTime ?? 15,
+      roundTime: options.roundTime ?? 20,
       voteTime: options.voteTime ?? 15,
       briefTime: options.briefTime ?? 5,
       spyChanceTime: options.spiesCount ?? 10
     }
-    this.#locations = locations ?? {
+    this.#locations = locations ?? [{
       title: 'void',
       url: null,
       roles: ['void']
-    }
+    }]
     this.#state = {
       roundId: 0,
       lastStartMoment: null,
       location: {},
-      players: []
+      players: [],
+      roundTime: 0,
+      voteTime: 0,
+      briefTime: 0,
+      spyChanceTime: 0
     }
 
     this.#eventUsersChanged = new MyEvent(this)
@@ -76,6 +82,9 @@ module.exports = class SpyRoom {
 
     this.#timer = new Timer()
     this.#stopGameFlag = false
+
+    this.#resolve = null
+    this.#intervalId = null
   }
 
   addUser (username, socket) {
@@ -114,6 +123,12 @@ module.exports = class SpyRoom {
         isOwner: player.isOwner,
         score: player.score
       }))
+    })
+    socket.emit('timerTime', {
+      data: {
+        originTime: this.#isOnBrief ? this.#options.briefTime : this.#options.roundTime,
+        currentTime: this.#isOnBrief ? this.#state.briefTime : this.#state.roundTime
+      }
     })
     const player = this.#state.players.find(player => player.username === username)
     if (!player) { return }
@@ -176,6 +191,7 @@ module.exports = class SpyRoom {
     this.#state.roundId = 0
     this.#stopGameFlag = false
     while (!this.#victoryCondition() && !this.#stopGameFlag) {
+      // TODO: Проверять, изменил ли владелец игры настройки
       // Случайный выбор локации
       this.#state.location = this.#locations[Util.getRandomArrayIndex(this.#locations.length)]
       // Случайное распределение ролей между игроками
@@ -189,6 +205,7 @@ module.exports = class SpyRoom {
         this.#state.players[Util.getRandomArrayIndex(this.#state.players.length)].isSpy = true
       } while (this.#state.players.filter(players => players.isSpy) < this.#options.spiesCount)
       for (const player of this.#state.players) {
+        player.votes = this.#state.players.filter(p => p.username !== player.username).map(player => player.username)
         player.role = player.isSpy ? null : this.#state.location.roles[Util.getRandomArrayIndex(this.#state.location.roles.length)]
         player.spyKey = player.isSpy ? Util.generateRandomString(SpyRoom.#spyKeyLength) : null
       }
@@ -196,13 +213,31 @@ module.exports = class SpyRoom {
         roundId: this.#state.roundId,
         players: this.#state.players,
         location: this.#state.location,
-        timerSeconds: this.#options.roundTime
+        timerTime: {
+          originTime: this.#options.roundTime,
+          currentTime: this.#options.roundTime
+        }
       })
       // Запуск таймера времени раунда
-      const isTimeout = await this.#launchTimer(this.#options.roundTime * 1000)
+      this.#state.roundTime = this.#options.roundTime
+      this.#state.voteTime = this.#options.voteTime
+      this.#state.spyChanceTime = this.#options.spyChanceTime
+      // TODO: понять, нужен ли тут ещё один while для state.round > 0, чтобы обрабатывать голосование
+      let res = await new Promise((resolve) => {
+        this.#resolve = resolve
+        this.#intervalId = setInterval(() => {
+          if (!this.#isOnPause) {
+            if (this.#state.roundTime-- <= 0) {
+              this.#resolveTimer({ isTimeout: true })
+            }
+          }
+        }, 1000)
+      })
       this.#state.roundId++
+      // Если игра была принудительно остановлена
+      if (res.toStopGame) { break }
       // Если раунд закончился по истечении времени
-      if (isTimeout) {
+      if (res.isTimeout) {
         for (const player of this.#state.players) {
           player.score += player.isSpy ? this.#options.spyTimeoutPoints : this.#options.playerTimeoutPoints
         }
@@ -214,51 +249,45 @@ module.exports = class SpyRoom {
           score: player.score
         }))
       })
-      // Если кто-то выиграл или владелец остановил игру
-      if (this.#victoryCondition() || this.#stopGameFlag) { break }
+      // Если кто-то выиграл
+      if (this.#victoryCondition()) { break }
       this.#isOnBrief = true
       this.#eventBriefStarted.notify({
-        timerSeconds: this.#options.briefTime
+        timerTime: {
+          originTime: this.#options.briefTime,
+          currentTime: this.#options.briefTime
+        }
       })
       // Запуск таймера времени перерыва между раундами
-      await this.#launchTimer(this.#options.briefTime * 1000)
+      this.#state.briefTime = this.#options.briefTime
+      res = await new Promise((resolve) => {
+        this.#resolve = resolve
+        this.#intervalId = setInterval(() => {
+          if (!this.#isOnPause) {
+            if (this.#state.briefTime-- <= 0) {
+              this.#resolveTimer({ isTimeout: true })
+            }
+          }
+        }, 1000)
+      })
       this.#isOnBrief = false
       this.#eventBriefOvered.notify({})
-      // Если владелец остановил игру
-      if (this.#stopGameFlag) { break }
+      if (res.toStopGame) { break }
     }
     this.#isRunning = false
     this.#eventGameOvered.notify({})
   }
 
-  #victoryCondition = () => this.#state.players.some(player => player.score >= this.#options.winScore)
-
-  // Рекурсивный таймер, в ход работы которого может вмешиваться владелец комнаты (ставить на паузу, останавливать)
-  #launchTimer = async (time) => {
-    if (time <= 0) { return }
-    try {
-      await this.#timer.run(time)
-      return true
-    } catch (e) {
-      if (e.isStopped) {
-        return
-      } else {
-        time = e.time
-        try {
-          this.#isOnPause = true
-          await this.#timer.waitForResume()
-          this.#isOnPause = false
-        } catch (e) {
-          this.#isOnPause = false
-          if (e.isStopped) { return }
-        }
-      }
-    }
-    return await this.#launchTimer(time)
+  #resolveTimer = (payload) => {
+    this.#resolve(payload)
+    clearInterval(this.#intervalId)
+    this.#resolve = this.#intervalId = null
   }
 
+  #victoryCondition = () => this.#state.players.some(player => player.score >= this.#options.winScore)
+
   pinpointLocation ({ spyKey, username, location, roundId }) {
-    if (!this.#isRunning) { return }
+    if (!this.#isRunning || this.isOnPause || this.#isOnBrief) { return }
     const spy = this.#state.players.find(player => player.username === username)
     if (!spy || spy.spyKey !== spyKey || roundId !== this.#state.roundId) { return }
     if (this.#state.location.title === location.title) {
@@ -270,24 +299,26 @@ module.exports = class SpyRoom {
         }
       }
     }
-    this.#timer.stop()
+    this.#resolveTimer({})
   }
 
   stop (ownerKey) {
     if (ownerKey !== this.#ownerKey || !this.#isRunning) { return }
     this.#stopGameFlag = true
-    this.#timer.stop()
+    this.#resolveTimer({ toStopGame: true })
   }
 
   pause (ownerKey) {
     if (ownerKey !== this.#ownerKey || !this.#isRunning) { return }
-    this.#timer.pause()
+    this.#isOnPause = true
+    // this.#timer.pause()
     this.#eventGamePaused.notify({})
   }
 
   resume (ownerKey) {
     if (ownerKey !== this.#ownerKey || !this.#isRunning) { return }
-    this.#timer.resume()
+    this.#isOnPause = false
+    // this.#timer.resume()
     this.#eventGameResumed.notify({})
   }
 

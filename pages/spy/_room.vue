@@ -14,9 +14,14 @@
       <button :disabled="gameIsRunning" @click="become(false)">
         Игроки
       </button>
-      <div v-for="(user, index) in (gameIsRunning ? players : playersFromUsers)" :key="index">
-        {{ user.username }}{{ (user.isOwner ? ' (owner)' : '') }}{{ ` (score: ${user.score ? user.score : 0})` }}{{ (gameIsRunning ? (playersFromUsers.some(p => p.username === user.username) ? '' : ' (off)') : '') }}
-      </div>
+      <PlayerCard
+        v-for="(user, index) in (gameIsRunning ? players : playersFromUsers)"
+        :key="index"
+        :username="user.username"
+        :is-owner="user.isOwner"
+        :score="user.score"
+        :is-offline="gameIsRunning && !playersFromUsers.some(p => p.username === user.username)"
+      />
     </div>
     <br>
     <div v-if="iAmOwner" class="temp-container">
@@ -32,7 +37,7 @@
       </button>
     </div>
     <br>
-    <Timer :seconds="timerSeconds" />
+    <Timer :time="timerTime" :is-on-pause="gameIsOnPause" />
     <br>
     <div v-if="gameIsRunning" class="temp-container">
       <div v-if="gameIsOnBrief">
@@ -62,10 +67,12 @@
 <script>
 import consolaGlobalInstance from 'consola'
 import LocationCard from '@/components/spy/LocationCard'
+import PlayerCard from '@/components/spy/PlayerCard'
 
 export default {
   components: {
-    LocationCard
+    LocationCard,
+    PlayerCard
   },
   layout: 'gameLayout',
   async validate (ctx) {
@@ -85,7 +92,10 @@ export default {
       player: null,
       players: [],
       location: null,
-      timerSeconds: 0,
+      timerTime: {
+        originTime: 0,
+        currentTime: 0
+      },
       ioApi: {},
       ioData: {}
     }
@@ -160,9 +170,9 @@ export default {
       this.location = location
       consolaGlobalInstance.log('location', location)
     },
-    'ioData.timerSeconds' (timerSeconds) {
-      this.timerSeconds = timerSeconds
-      consolaGlobalInstance.log('timerSeconds', timerSeconds)
+    'ioData.timerTime' (timerTime) {
+      this.timerTime = timerTime
+      consolaGlobalInstance.log('timerTime', timerTime)
     }
   },
   mounted () {

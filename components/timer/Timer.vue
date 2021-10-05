@@ -11,13 +11,21 @@
 export default {
   name: 'Timer',
   props: {
-    seconds: {
-      type: Number,
-      default: () => 0
+    time: {
+      type: Object,
+      default: () => ({
+        originTime: 0,
+        currentTime: 0
+      })
+    },
+    isOnPause: {
+      type: Boolean,
+      default: () => false
     }
   },
   data () {
     return {
+      originTime: 0,
       currentTime: 0,
       timerId: null,
       colorFull: '#6573ff',
@@ -25,23 +33,16 @@ export default {
     }
   },
   computed: {
-    timeValue () { return Math.floor(this.currentTime / 60) + ':' + this.currentTime % 60 },
-    barBackgroundStyle () { return `linear-gradient(87deg, ${this.colorFull} ${(100 - Math.round(this.currentTime * 100 / this.seconds))}%, ${this.colorEmpty} 0%)` }
+    timeValue () { return `${Math.floor(this.currentTime / 60)}:${this.currentTime % 60 < 10 ? '0' : ''}${this.currentTime % 60}` },
+    barBackgroundStyle () { return this.currentTime <= 0 ? this.colorFull : `linear-gradient(87deg, ${this.colorFull} ${(100 - Math.round(this.currentTime * 100 / this.originTime))}%, ${this.colorEmpty} 0%)` }
   },
   watch: {
-    seconds (newVal) {
-      if (this.timerId) {
-        this.stopTimer()
-      }
-      this.currentTime = newVal
-      if (newVal > 0) {
+    time ({ originTime, currentTime }) {
+      this.originTime = originTime
+      this.currentTime = currentTime
+      if (!this.timerId && originTime > 0 && currentTime > 0) {
         this.startTimer()
       }
-    }
-  },
-  mounted () {
-    if (this.seconds > 0) {
-      this.startTimer()
     }
   },
   destroyed () {
@@ -49,26 +50,27 @@ export default {
   },
   methods: {
     startTimer () {
-      if (this.currentTime <= 0) { return }
       this.timerId = setInterval(() => {
-        if (--this.currentTime <= 0) {
-          this.currentTime = 0
-          this.stopTimer()
+        if (!this.isOnPause) {
+          if (this.currentTime-- <= 0) {
+            this.currentTime = 0
+            this.stopTimer()
+          }
         }
       }, 1000)
     },
     stopTimer () {
       clearTimeout(this.timerId)
+      this.timerId = null
     }
   }
 }
 </script>
 
-<style>
+<style scoped>
 .container {
   padding: 0.5em;
   background: #3E4447;
-  border: 1px solid black;
   border-radius: 1em;
   width: fit-content;
   height: fit-content;
@@ -80,7 +82,7 @@ export default {
   color: white;
 }
 .bar {
-  border: 1px solid black;
+  border: 0.1em solid black;
   width: 5em;
   height: 0.5em;
   border-radius: 0.5em;
