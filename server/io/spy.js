@@ -8,96 +8,49 @@ const { default: Data } = require(pResolve('./server/db'))
 const API = {
   version: 1.0,
   evts: {
-    rename: {
-      data: undefined
-    },
-    users: {
-      data: undefined
-    },
-    locations: {
-      data: undefined
-    },
-    ownerKey: {
-      data: undefined
-    },
-    gameRunningFlag: {
-      data: undefined
-    },
-    gamePauseFlag: {
-      data: undefined
-    },
-    gameBriefFlag: {
-      data: undefined
-    },
-    roundId: {
-      data: undefined
-    },
-    players: {
-      data: undefined
-    },
-    player: {
-      data: undefined
-    },
-    location: {
-      data: undefined
-    },
-    timerTime: {
-      data: undefined
-    }
+    rename: { data: undefined },
+    users: { data: undefined },
+    locations: { data: undefined },
+    ownerKey: { data: undefined },
+    gameRunningFlag: { data: undefined },
+    gamePauseFlag: { data: undefined },
+    gameBriefFlag: { data: undefined },
+    gameVotingFlag: { data: undefined },
+    gameSpyChanceFlag: { data: undefined },
+    roundId: { data: undefined },
+    players: { data: undefined },
+    player: { data: undefined },
+    location: { data: undefined },
+    timerTime: { data: undefined },
+    additionalTimerTime: { data: undefined },
+    voting: { data: undefined }
   },
   methods: {
-    createRoom: {
-      resp: ''
-    },
     joinRoom: {
-      msg: {
-        roomId: '',
-        username: ''
-      }
+      msg: { roomId: '', username: '' }
     },
     become: {
-      msg: {
-        roomId: '',
-        username: '',
-        becomeWatcher: ''
-      }
+      msg: { roomId: '', username: '', becomeWatcher: '' }
     },
     startOrResumeGame: {
-      msg: {
-        roomId: '',
-        ownerKey: ''
-      }
+      msg: { roomId: '', ownerKey: '' }
     },
     pauseGame: {
-      msg: {
-        roomId: '',
-        ownerKey: ''
-      }
+      msg: { roomId: '', ownerKey: '' }
     },
     stopGame: {
-      msg: {
-        roomId: '',
-        ownerKey: ''
-      }
+      msg: { roomId: '', ownerKey: '' }
     },
     pinpointLocation: {
-      msg: {
-        roomId: '',
-        spyKey: '',
-        username: '',
-        location: '',
-        roundId: ''
-      }
+      msg: { roomId: '', spyKey: '', username: '', location: '', roundId: '' }
+    },
+    startVotingAgainstPlayer: {
+      mgs: { roomId: '', username: '', defendantUsername: '', roundId: '' }
+    },
+    voteAgainstPlayer: {
+      mgs: { roomId: '', username: '', defendantUsername: '', voteFlag: '', roundId: '' }
     }
   }
-}
-
-const prepareRoom = async (roomId) => {
-  const res = await api.getters.getRoomOriginOptions(roomId)
-  const originOptions = JSON.parse(res.data.options)
-  const room = new SpyRoom(roomId, originOptions.owner, originOptions.options, originOptions.locations)
-  getRooms().push(room)
-  return room
 }
 
 const getNamespace = (roomId, username) => `spy/${roomId}/${username}`
@@ -105,16 +58,17 @@ const getRooms = () => Data.rooms.spy
 const getRoom = roomId => Data.rooms.spy.find(room => room.id === roomId)
 
 export default function Svc (socket, io) {
-  const spySvc = Object.freeze({
-    getAPI () {
-      return API
-    },
+  return Object.freeze({
+    getAPI () { return API },
     async joinRoom ({ roomId, username }) {
       socket.username = username
       let room = getRoom(roomId)
       // Если комната есть в БД, но нет в ОЗУ
       if (!room && await Room.findOne({ _id: roomId }) !== null) {
-        room = await prepareRoom(roomId)
+        const res = await api.getters.getRoomOriginOptions(roomId)
+        const originOptions = JSON.parse(res.data.options)
+        room = new SpyRoom(roomId, originOptions.owner, originOptions.options, originOptions.locations)
+        getRooms().push(room)
       }
       // Подписываемся на события комнаты
       const usersChangedHandler = room.eventUsersChanged.subscribe((sender, payload) => {
@@ -169,6 +123,22 @@ export default function Svc (socket, io) {
         socket.emit('gameBriefFlag', { data: false })
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Brief overed')
       })
+      const votingStartedHandler = room.eventVotingStarted.subscribe((sender, payload) => {
+        socket.emit('gameVotingFlag', { data: true })
+        socket.emit('additionalTimerTime', { data: payload.timerTime })
+        socket.emit('voting', { data: payload.voting })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Voting started')
+      })
+      const votingOveredHandler = room.eventVotingOvered.subscribe((sender, payload) => {
+        socket.emit('gameVotingFlag', { data: false })
+        socket.emit('timerTime', { data: payload.timerTime })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Voting overed')
+      })
+      const playerSpentVoteHandler = room.eventPlayerSpentVote.subscribe((sender, payload) => {
+        if (payload.player.username !== socket.username) { return }
+        socket.emit('player', { data: payload.player })
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Player spent vote')
+      })
       // Добавляем пользователя в комнату
       room.addUser(username, socket)
       // Подписываем пользователя на событие отключения
@@ -184,10 +154,11 @@ export default function Svc (socket, io) {
         room.eventGameResumed.describe(gameResumedHandler)
         room.eventBriefStarted.describe(briefStartedHandler)
         room.eventBriefOvered.describe(briefOveredHandler)
+        room.eventVotingStarted.describe(votingStartedHandler)
+        room.eventVotingOvered.describe(votingOveredHandler)
+        room.eventPlayerSpentVote.describe(playerSpentVoteHandler)
         socket.leave(getNamespace(roomId, socket.username))
       })
-      // Подключаем сокет пользователя к персональному каналу (Возможно не понадобится более)
-      socket.join(getNamespace(roomId, socket.username))
     },
     become ({ roomId, username, becomeWatcher }) {
       const room = getRoom(roomId)
@@ -227,7 +198,25 @@ export default function Svc (socket, io) {
         location,
         roundId
       })
+    },
+    startVotingAgainstPlayer ({ roomId, username, defendantUsername, roundId }) {
+      const room = getRoom(roomId)
+      if (!room || !room.isRunning) { return }
+      room.startVotingAgainstPlayer({
+        accuserUsername: username,
+        defendantUsername,
+        roundId
+      })
+    },
+    voteAgainstPlayer ({ roomId, username, defendantUsername, voteFlag, roundId }) {
+      const room = getRoom(roomId)
+      if (!room || !room.isRunning) { return }
+      room.voteAgainstPlayer({
+        username,
+        defendantUsername,
+        voteFlag,
+        roundId
+      })
     }
   })
-  return spySvc
 }

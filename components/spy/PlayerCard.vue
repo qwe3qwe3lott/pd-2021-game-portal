@@ -3,7 +3,7 @@
     <p class="username" :style="{'font-weight': (isOwner ? 'bold' : 'normal'), opacity: (isOffline ? 0.5 : 1)}">
       {{ username }}
     </p>
-    <button class="button" />
+    <button class="button" :disabled="!allowToVote" @click="$emit('votingAgainstPlayer', username)" />
     <p class="score">
       {{ score }}
     </p>
@@ -29,6 +29,10 @@ export default {
     score: {
       type: Number,
       default: () => 0
+    },
+    allowToVote: {
+      type: Boolean,
+      default: () => false
     }
   }
 }
