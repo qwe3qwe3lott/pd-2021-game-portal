@@ -21,6 +21,8 @@
         :is-owner="user.isOwner"
         :score="user.score"
         :is-offline="gameIsRunning && !playersFromUsers.some(p => p.username === user.username)"
+        :allow-to-vote="gameIsRunning && !gameIsOnPause && !gameIsOnVoting && !gameIsOnBrief && player && player.votes && player.votes.some(vote => vote === user.username)"
+        @votingAgainstPlayer="startVotingAgainstPlayer"
       />
     </div>
     <br>
@@ -37,7 +39,21 @@
       </button>
     </div>
     <br>
-    <Timer :time="timerTime" :is-on-pause="gameIsOnPause" />
+    <!-- Основной таймер -->
+    <Timer :time="timerTime" :is-on-pause="gameIsOnPause || gameIsOnVoting" />
+    <!-- Таймер для голосования -->
+    <div v-show="gameIsOnVoting">
+      <Timer :time="additionalTimerTime" :is-on-pause="gameIsOnPause" />
+      <b>{{ voting.defendantUsername }}</b>
+      <div v-show="username !== voting.defendantUsername && username !== voting.accuserUsername">
+        <button @click="voteAgainstPlayer(true)">
+          Да
+        </button>
+        <button @click="voteAgainstPlayer(false)">
+          Нет
+        </button>
+      </div>
+    </div>
     <br>
     <div v-if="gameIsRunning" class="temp-container">
       <div v-if="gameIsOnBrief">
@@ -89,10 +105,20 @@ export default {
       gameIsRunning: false,
       gameIsOnPause: false,
       gameIsOnBrief: false,
+      gameIsOnVoting: false,
+      gameIsOnSpyChance: false,
       player: null,
       players: [],
       location: null,
+      voting: {
+        defendantUsername: null,
+        accuserUsername: null
+      },
       timerTime: {
+        originTime: 0,
+        currentTime: 0
+      },
+      additionalTimerTime: {
         originTime: 0,
         currentTime: 0
       },
@@ -154,6 +180,14 @@ export default {
       this.gameIsOnBrief = gameBriefFlag
       consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag)
     },
+    'ioData.gameVotingFlag' (gameVotingFlag) {
+      this.gameIsOnVoting = gameVotingFlag
+      consolaGlobalInstance.log('gameIsOnVoting', gameVotingFlag)
+    },
+    'ioData.gameSpyChanceFlag' (gameSpyChanceFlag) {
+      this.gameIsOnSpyChance = gameSpyChanceFlag
+      consolaGlobalInstance.log('gameIsOnSpyChance', gameSpyChanceFlag)
+    },
     'ioData.roundId' (roundId) {
       this.roundId = roundId
       consolaGlobalInstance.log('roundId', roundId)
@@ -173,6 +207,14 @@ export default {
     'ioData.timerTime' (timerTime) {
       this.timerTime = timerTime
       consolaGlobalInstance.log('timerTime', timerTime)
+    },
+    'ioData.additionalTimerTime' (additionalTimerTime) {
+      this.additionalTimerTime = additionalTimerTime
+      consolaGlobalInstance.log('additionalTimerTime', additionalTimerTime)
+    },
+    'ioData.voting' (voting) {
+      this.voting = voting
+      consolaGlobalInstance.log('voting', voting)
     }
   },
   mounted () {
@@ -221,11 +263,34 @@ export default {
     },
     pinpointLocation (location) {
       if (!this.gameIsRunning || !this.player || !this.player.spyKey) { return }
+      consolaGlobalInstance.log('pinpointLocation')
       this.ioApi.pinpointLocation({
         roomId: this.roomId,
         username: this.username,
         spyKey: this.player.spyKey,
         location,
+        roundId: this.roundId
+      })
+    },
+    startVotingAgainstPlayer (username) {
+      if (!this.gameIsRunning || this.gameIsOnPause || this.gameIsOnBrief || this.gameIsOnVoting || this.gameIsOnSpyChance) { return }
+      consolaGlobalInstance.log('startVotingAgainstPlayer')
+      this.ioApi.startVotingAgainstPlayer({
+        roomId: this.roomId,
+        username: this.username,
+        defendantUsername: username,
+        roundId: this.roundId
+      })
+    },
+    voteAgainstPlayer (voteFlag) {
+      if (!this.gameIsRunning || this.gameIsOnPause || this.gameIsOnBrief || !this.gameIsOnVoting || this.gameIsOnSpyChance) { return }
+      if (this.username === this.voting.defendantUsername || this.username === this.voting.accuserUsername) { return }
+      consolaGlobalInstance.log('voteAgainstPlayer')
+      this.ioApi.voteAgainstPlayer({
+        roomId: this.roomId,
+        username: this.username,
+        defendantUsername: this.voting.defendantUsername,
+        voteFlag,
         roundId: this.roundId
       })
     }
