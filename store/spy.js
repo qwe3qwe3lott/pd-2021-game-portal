@@ -6,7 +6,8 @@ export const state = () => ({
       img: 'url',
       roles: [
         'Бабка',
-        'Дед'
+        'Дед',
+        '', '', '', '', '', '', '', ''
       ],
       requires: true
     },
@@ -16,7 +17,8 @@ export const state = () => ({
       img: 'url',
       roles: [
         'Кот',
-        'Собака'
+        'Собака',
+        '', '', '', '', '', '', '', ''
       ],
       requires: true
     },
@@ -26,7 +28,8 @@ export const state = () => ({
       img: 'url',
       roles: [
         'Слон',
-        'Носорог'
+        'Носорог',
+        '', '', '', '', '', '', '', ''
       ],
       requires: true
     }
@@ -56,5 +59,23 @@ export const mutations = {
           requires: true
         })
     }
+  },
+  UPDATE_ROLE (state, payload) {
+    const location = state.locations.find(loc => loc.id === payload.locationId)
+    if (!location) { return }
+    location.roles[payload.index] = payload.role
+  },
+  UPDATE_TITLE (state, payload) {
+    const location = state.locations.find(loc => loc.id === payload.locationId)
+    if (!location) { return }
+    location.title = payload.title
+  },
+  UPDATE_IMAGE (state, payload) {
+    const location = state.locations.find(loc => loc.id === payload.locationId)
+    if (!location) { return }
+    location.img = payload.image
+  },
+  DELETE_LOCATION (state, payload) {
+    state.locations = state.locations.filter(location => location.id !== payload.id)
   }
 }
