@@ -7,7 +7,7 @@
     <div v-show="isOpened" class="options">
       <label v-for="(option, index) in roomOptions" :key="index">
         {{ option.description }}
-        <input type="number" :value="option.value" :min="option.min" :max="option.max" @input="UPDATE_ROOM_OPTION({ optionKey: option.key, value: $event.target.value })">
+        <input type="number" :value="option.value" :min="option.min" :max="option.max" @input="UPDATE_ROOM_OPTION({ optionKey: option.key, value: Number($event.target.value) })">
       </label>
     </div>
   </div>

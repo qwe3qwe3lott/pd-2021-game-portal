@@ -1,16 +1,11 @@
 <template>
   <div :key="id">
-    <b>{{ title }}</b>
-    <i>{{ img }}</i>
-    <b>{{ id }}</b>
+    <b v-show="!isOpened">{{ title }}</b>
     <input :checked="requires" type="checkbox" @input="UPDATE_REQUIRE_LOCATION_FLAG({ locationId: id, flag: !requires})">
-    <div v-for="(role, i) in roles" :key="i">
-      {{ role }}
-    </div>
-    <button @click="isRolesShowed = !isRolesShowed">
+    <button @click="isOpened = !isOpened">
       Изменить настройки локации
     </button>
-    <div v-show="isRolesShowed" class="checkout">
+    <div v-show="isOpened" class="checkout">
       <div>
         Тайтл
       </div>
@@ -57,7 +52,7 @@ export default {
   },
   data () {
     return {
-      isRolesShowed: false
+      isOpened: false
     }
   },
   methods: {
