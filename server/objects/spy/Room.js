@@ -216,7 +216,6 @@ module.exports = class SpyRoom {
     // Каждая итерация цикла знаменует одни раунд партии
     this.#state.roundId = 0
     while (!this.#victoryCondition()) {
-      // TODO: Проверять, изменил ли владелец игры настройки
       // Случайный выбор локации
       this.#state.location = this.#locations[Util.getRandomArrayIndex(this.#locations.length)]
       // Случайное распределение ролей между игроками
