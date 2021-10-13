@@ -3,28 +3,28 @@
     <b>{{ title }}</b>
     <i>{{ img }}</i>
     <b>{{ id }}</b>
-    <input :checked="requires" type="checkbox" @input="$emit('isRequiredChanged', {title, requires:!requires})">
+    <input :checked="requires" type="checkbox" @input="UPDATE_REQUIRE_LOCATION_FLAG({ locationId: id, flag: !requires})">
     <div v-for="(role, i) in roles" :key="i">
       {{ role }}
     </div>
-    <button @click="changeVisible">
+    <button @click="isRolesShowed = !isRolesShowed">
       Изменить настройки локации
     </button>
     <div v-show="isRolesShowed" class="checkout">
       <div>
         Тайтл
       </div>
-      <input :value="title" @change="$emit('titleChanged', {locationId: id, title: $event.target.value})">
+      <input :value="title" @input="UPDATE_TITLE({locationId: id, title: $event.target.value})">
       <div>
         Картинка
       </div>
-      <input :value="img" @change="$emit('imgChanged', {locationId: id, image: $event.target.value})">
+      <input :value="img" @input="UPDATE_IMAGE({locationId: id, image: $event.target.value})">
       <div>
         Роли
       </div>
-      <input v-for="(role, i) in roles" :key="i" :value="role" @change="$emit('roleChanged', {locationId: id, index: i, role: $event.target.value})">
+      <input v-for="(role, i) in roles" :key="i" :value="role" @input="UPDATE_ROLE({locationId: id, index: i, role: $event.target.value})">
     </div>
-    <button @click="deleteLocation">
+    <button @click="DELETE_LOCATION({ locationId: id })">
       Удалить локацию
     </button>
   </div>
@@ -32,7 +32,6 @@
 
 <script>
 import { mapMutations } from 'vuex'
-
 export default {
   props: {
     id: {
@@ -63,16 +62,8 @@ export default {
   },
   methods: {
     ...mapMutations('spy', [
-      'DELETE_LOCATION'
-    ]),
-    changeVisible () {
-      this.isRolesShowed = !this.isRolesShowed
-    },
-    deleteLocation () {
-      this.DELETE_LOCATION({
-        id: this.id
-      })
-    }
+      'UPDATE_REQUIRE_LOCATION_FLAG', 'DELETE_LOCATION', 'UPDATE_ROLE', 'UPDATE_TITLE', 'UPDATE_IMAGE'
+    ])
   }
 }
 </script>

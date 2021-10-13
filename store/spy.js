@@ -5,9 +5,7 @@ export const state = () => ({
       title: 'Парк',
       img: 'url',
       roles: [
-        'Бабка',
-        'Дед',
-        '', '', '', '', '', '', '', ''
+        'Бабка', 'Дед', '', '', '', '', '', '', '', ''
       ],
       requires: true
     },
@@ -16,9 +14,7 @@ export const state = () => ({
       title: 'Дом',
       img: 'url',
       roles: [
-        'Кот',
-        'Собака',
-        '', '', '', '', '', '', '', ''
+        'Кот', 'Собака', '', '', '', '', '', '', '', ''
       ],
       requires: true
     },
@@ -27,9 +23,7 @@ export const state = () => ({
       title: 'Африка',
       img: 'url',
       roles: [
-        'Слон',
-        'Носорог',
-        '', '', '', '', '', '', '', ''
+        'Слон', 'Носорог', '', '', '', '', '', '', '', ''
       ],
       requires: true
     }
@@ -38,15 +32,14 @@ export const state = () => ({
 })
 
 export const getters = {
-  getLocations: state => state.locations
+  getLocations: state => state.locations,
+  getRequiredLocations: state => state.locations.filter(location => location.requires)
 }
 export const mutations = {
-  UPDATE_REQUIRE_LOCATION_FLAG: (state, { locationTitle, flag }) => {
-    for (const location of state.locations) {
-      if (location.title === locationTitle) {
-        location.requires = flag
-      }
-    }
+  UPDATE_REQUIRE_LOCATION_FLAG: (state, payload) => {
+    const location = state.locations.find(loc => loc.id === payload.locationId)
+    if (!location) { return }
+    location.requires = payload.flag
   },
   ADD_LOCATION (state, payload) {
     if (state.locations.length < 100) {
@@ -76,6 +69,6 @@ export const mutations = {
     location.img = payload.image
   },
   DELETE_LOCATION (state, payload) {
-    state.locations = state.locations.filter(location => location.id !== payload.id)
+    state.locations = state.locations.filter(location => location.id !== payload.locationId)
   }
 }
