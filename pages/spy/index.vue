@@ -9,6 +9,8 @@
     </button>
     {{ errorMessage }}
     <br>
+    <OptionsCreationCard />
+    <br>
     <LocationCreationCard
       v-for="(location, index) in getLocations"
       :id="location.id"
@@ -25,11 +27,13 @@
 </template>
 
 <script>
-import { mapGetters, mapMutations } from 'vuex'
+import { mapGetters, mapMutations, mapState } from 'vuex'
 import LocationCreationCard from '@/components/spy/LocationCreationCard'
+import OptionsCreationCard from '@/components/spy/OptionsCreationCard'
 export default {
   components: {
-    LocationCreationCard
+    LocationCreationCard,
+    OptionsCreationCard
   },
   layout: 'gameLayout',
   data () {
@@ -41,6 +45,9 @@ export default {
   computed: {
     ...mapGetters('spy', [
       'getLocations', 'getRequiredLocations'
+    ]),
+    ...mapState('spy', [
+      'roomOptions'
     ])
   },
   methods: {
@@ -67,6 +74,7 @@ export default {
           return
         }
       }
+      // TODO: настройки комнаты
       const originOptions = {
         owner: this.$store.getters.getUsername,
         locations: this.getLocations.filter(location => location.requires).map(location => ({
@@ -74,9 +82,10 @@ export default {
           img: location.img,
           roles: location.roles.filter(role => role.trim() !== '')
         })),
-        options: {
-          spiesCount: 1
-        }
+        options: {}
+      }
+      for (const option of this.roomOptions) {
+        originOptions.options[option.key] = option.value
       }
       const res = await this.$back.posts.createRoom({
         originOptions,

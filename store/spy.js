@@ -28,7 +28,20 @@ export const state = () => ({
       requires: true
     }
   ],
-  counter: 3
+  counter: 3,
+  roomOptions: [
+    { key: 'spiesCount', value: 1, min: 1, max: 100, description: 'Количество шпионов' },
+    { key: 'spyWinPoints', value: 4, min: 0, max: 100, description: 'Количество очков, начисляемых шпиону за победу' },
+    { key: 'spyTimeoutPoints', value: 2, min: 0, max: 100, description: 'Количество очков, начисляемых шпиону за тайм-аут' },
+    { key: 'playerWinPoints', value: 1, min: 0, max: 100, description: 'Количество очков, начисляемых не шпиону за победу' },
+    { key: 'playerBonusPoints', value: 2, min: 0, max: 100, description: 'Количество очков, начисляемых не шпиону за победу после инициирования голосования' },
+    { key: 'playerTimeoutPoints', value: 0, min: 0, max: 100, description: 'Количество очков, начисляемых не шпиону за тайм-аут' },
+    { key: 'winScore', value: 10, min: 1, max: 100, description: 'Количество очков для победы' },
+    { key: 'roundTime', value: 60, min: 5, max: 1000, description: 'Количество секунд раунда' },
+    { key: 'votingTime', value: 10, min: 5, max: 60, description: 'Количество секунд голосования' },
+    { key: 'briefTime', value: 5, min: 5, max: 60, description: 'Количество секунд перерыва' },
+    { key: 'spyChanceTime', value: 10, min: 5, max: 60, description: 'Количество секунд для шпиона после раскрытия' }
+  ]
 })
 
 export const getters = {
@@ -36,6 +49,11 @@ export const getters = {
   getRequiredLocations: state => state.locations.filter(location => location.requires)
 }
 export const mutations = {
+  UPDATE_ROOM_OPTION: (state, payload) => {
+    const roomOption = state.roomOptions.find(option => option.key === payload.optionKey)
+    if (!roomOption) { return }
+    roomOption.value = payload.value
+  },
   UPDATE_REQUIRE_LOCATION_FLAG: (state, payload) => {
     const location = state.locations.find(loc => loc.id === payload.locationId)
     if (!location) { return }
