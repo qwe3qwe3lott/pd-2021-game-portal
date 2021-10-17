@@ -21,12 +21,21 @@
     <button @click="addLocation">
       Добавить локацию
     </button>
+    <div class="export-list-location">
+      <button @click="exportJSON">Экспорт списка локаций</button>
+    </div>
+    <div class="import-list-location">
+      <input id="file" type="file" accept=".json"/>
+      <button @click="importJSON">Импорт списка локаций</button>
+    </div>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapMutations } from 'vuex'
+import FileSaver from 'file-saver'
 import LocationCreationCard from '@/components/spy/LocationCreationCard'
+
 export default {
   components: {
     LocationCreationCard
@@ -45,8 +54,19 @@ export default {
   },
   methods: {
     ...mapMutations('spy', [
+      'UPLOAD_LOCATION',
       'ADD_LOCATION'
     ]),
+    exportJSON () {
+      const data = JSON.stringify(this.getLocations)
+      const blob = new Blob([data], { type: '' })
+      FileSaver.saveAs(blob, 'ListLocation.json')
+    },
+    async importJSON () {
+      const file = document.getElementById('file').files[0]
+      const dataFromFile = await new Response(file).text()
+      this.UPLOAD_LOCATION(JSON.parse(dataFromFile))
+    },
     async createRoom () {
       this.errorMessage = ''
       if (this.getRequiredLocations.length < this.locationsRequiredAtLess) {

@@ -53,6 +53,10 @@ export const mutations = {
         })
     }
   },
+  UPLOAD_LOCATION (state, payload) {
+    state.locations = payload
+    state.counter = payload.length
+  },
   UPDATE_ROLE (state, payload) {
     const location = state.locations.find(loc => loc.id === payload.locationId)
     if (!location) { return }
