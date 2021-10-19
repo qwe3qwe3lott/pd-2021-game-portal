@@ -1,7 +1,7 @@
 <template>
   <div class="card">
     <b>Расширенные настройки</b>
-    <button @click="isOpened = !isOpened">
+    <button type="button" @click="isOpened = !isOpened">
       Раскрыть
     </button>
     <div v-show="isOpened" class="options">
@@ -12,7 +12,6 @@
           :value="option.value"
           :min="option.min"
           :max="option.max"
-          :placeholder="option.placeholder"
           @input="UPDATE_ROOM_OPTION({ optionKey: option.key, value: Number($event.target.value) })"
         >
       </label>
@@ -30,14 +29,10 @@ export default {
     }
   },
   computed: {
-    ...mapState('spy', [
-      'roomOptions'
-    ])
+    ...mapState('spy', ['roomOptions'])
   },
   methods: {
-    ...mapMutations('spy', [
-      'UPDATE_ROOM_OPTION'
-    ])
+    ...mapMutations('spy', ['UPDATE_ROOM_OPTION'])
   }
 }
 </script>

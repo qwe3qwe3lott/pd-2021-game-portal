@@ -9,15 +9,22 @@
       <div>
         Тайтл
       </div>
-      <input :value="title" @input="UPDATE_TITLE({locationId: id, title: $event.target.value})">
+      <input type="text" maxlength="32" :value="title" @input="UPDATE_TITLE({locationId: id, title: $event.target.value})">
       <div>
         Картинка
       </div>
-      <input :value="img" @input="UPDATE_IMAGE({locationId: id, image: $event.target.value})">
+      <input type="url" maxlength="512" :value="img" @input="UPDATE_IMAGE({locationId: id, image: $event.target.value})">
       <div>
         Роли
       </div>
-      <input v-for="(role, i) in roles" :key="i" :value="role" @input="UPDATE_ROLE({locationId: id, index: i, role: $event.target.value})">
+      <input
+        v-for="(role, i) in roles"
+        :key="i"
+        type="text"
+        maxlength="32"
+        :value="role"
+        @input="UPDATE_ROLE({locationId: id, index: i, role: $event.target.value})"
+      >
     </div>
     <button @click="DELETE_LOCATION({ locationId: id })">
       Удалить локацию
@@ -29,26 +36,11 @@
 import { mapMutations } from 'vuex'
 export default {
   props: {
-    id: {
-      type: Number,
-      default: () => -1
-    },
-    title: {
-      type: String,
-      default: () => ''
-    },
-    img: {
-      type: String,
-      default: () => ''
-    },
-    roles: {
-      type: Array,
-      default: () => []
-    },
-    requires: {
-      type: Boolean,
-      default: () => true
-    }
+    id: { type: Number, default: () => -1 },
+    title: { type: String, default: () => '' },
+    img: { type: String, default: () => '' },
+    roles: { type: Array, default: () => [] },
+    requires: { type: Boolean, default: () => true }
   },
   data () {
     return {
@@ -56,9 +48,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('spy', [
-      'UPDATE_REQUIRE_LOCATION_FLAG', 'DELETE_LOCATION', 'UPDATE_ROLE', 'UPDATE_TITLE', 'UPDATE_IMAGE'
-    ])
+    ...mapMutations('spy', ['UPDATE_REQUIRE_LOCATION_FLAG', 'DELETE_LOCATION', 'UPDATE_ROLE', 'UPDATE_TITLE', 'UPDATE_IMAGE'])
   }
 }
 </script>
@@ -66,7 +56,7 @@ export default {
 <style scoped>
 .checkout{
   width: 200px;
-  height: 500px;
-  background-color: blue;
+  height: fit-content;
+  background-color: lightgray;
 }
 </style>

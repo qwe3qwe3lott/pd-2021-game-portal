@@ -20,7 +20,7 @@ export default {
         }
       }
     },
-    spy: Boolean
+    spy: { type: Boolean, default: () => false }
   }
 }
 </script>

@@ -4,15 +4,15 @@
       Назад
     </nuxt-link>
     <br>
-    <button @click="createRoom">
-      Создать комнату
-    </button>
-    {{ errorMessage }}
-    <br>
-    <OptionsCreationCard />
+    <form @submit.prevent="createRoom">
+      <input type="submit" value="Создать комнату">
+      {{ errorMessage }}
+      <br>
+      <OptionsCreationCard />
+    </form>
     <br>
     <LocationCreationCard
-      v-for="(location, index) in getLocations"
+      v-for="(location, index) in locations"
       :id="location.id"
       :key="index"
       :title="location.title"
@@ -20,7 +20,7 @@
       :roles="location.roles"
       :requires="location.requires"
     />
-    <button @click="addLocation">
+    <button @click="ADD_LOCATION">
       Добавить локацию
     </button>
     <div class="export-list-location">
@@ -52,17 +52,11 @@ export default {
     }
   },
   computed: {
-    ...mapGetters('spy', [
-      'getLocations', 'getRequiredLocations', 'getLocationsForExportToJSON'
-    ]),
-    ...mapState('spy', [
-      'roomOptions'
-    ])
+    ...mapGetters('spy', ['getRequiredLocations', 'getLocationsForExportToJSON']),
+    ...mapState('spy', ['roomOptions', 'locations'])
   },
   methods: {
-    ...mapMutations('spy', [
-      'REPLACE_LOCATIONS', 'ADD_LOCATION'
-    ]),
+    ...mapMutations('spy', ['REPLACE_LOCATIONS', 'ADD_LOCATION']),
     exportJSON () {
       const data = JSON.stringify(this.getLocationsForExportToJSON)
       const blob = new Blob([data], { type: '' })
@@ -99,7 +93,7 @@ export default {
       }
       const originOptions = {
         owner: this.$store.getters.getUsername,
-        locations: this.getLocations.filter(location => location.requires).map(location => ({
+        locations: this.locations.filter(location => location.requires).map(location => ({
           title: location.title,
           img: location.img,
           roles: location.roles.filter(role => role.trim() !== '')
@@ -114,15 +108,6 @@ export default {
         game: 'spy'
       })
       await this.$router.push({ path: `/spy/${res.data.roomId}` })
-    },
-    addLocation () {
-      this.ADD_LOCATION(
-        {
-          name: '',
-          url: '',
-          roles: Array(10).fill('')
-        }
-      )
     }
   }
 }

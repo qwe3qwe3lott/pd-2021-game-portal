@@ -118,18 +118,9 @@ export default {
       players: [],
       winners: [],
       location: null,
-      voting: {
-        defendantUsername: null,
-        accuserUsername: null
-      },
-      timerTime: {
-        originTime: 0,
-        currentTime: 0
-      },
-      additionalTimerTime: {
-        originTime: 0,
-        currentTime: 0
-      },
+      voting: { defendantUsername: null, accuserUsername: null },
+      timerTime: { originTime: 0, currentTime: 0 },
+      additionalTimerTime: { originTime: 0, currentTime: 0 },
       ioApi: {},
       ioData: {}
     }
