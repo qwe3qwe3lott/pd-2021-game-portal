@@ -91,12 +91,10 @@
 import consolaGlobalInstance from 'consola'
 import LocationCard from '@/components/spy/LocationCard'
 import PlayerCard from '@/components/spy/PlayerCard'
-
+import Timer from '@/components/timer/Timer'
+// TODO: Сделать указание на локацию после раунда и на указанную шпионом локаицю
 export default {
-  components: {
-    LocationCard,
-    PlayerCard
-  },
+  components: { LocationCard, PlayerCard, Timer },
   layout: 'gameLayout',
   async validate (ctx) {
     const res = await ctx.$back.getters.checkRoom(ctx.route.params.room)

@@ -202,7 +202,7 @@ module.exports = class SpyRoom {
       }
       this.#state.players.forEach((player) => { player.isSpy = false })
       do { this.#state.players[Util.getRandomArrayIndex(this.#state.players.length)].isSpy = true }
-      while (this.#state.players.filter(players => players.isSpy) < this.#options.spiesCount)
+      while (this.#state.players.filter(players => players.isSpy).length < this.#options.spiesCount)
       for (const player of this.#state.players) {
         player.votes = this.#state.players.filter(p => p.username !== player.username).map(player => player.username)
         player.role = player.isSpy ? null : this.#state.location.roles[Util.getRandomArrayIndex(this.#state.location.roles.length)]
