@@ -25,6 +25,12 @@
         @votingAgainstPlayer="startVotingAgainstPlayer"
       />
     </div>
+    <div v-show="winners.length > 0">
+      <b>{{ winners.length === 1 ? 'Победитель:' : 'Победители:' }}</b>
+      <div v-for="(winner, index) in winners" :key="index">
+        {{ winner }}
+      </div>
+    </div>
     <br>
     <div v-if="iAmOwner" class="temp-container">
       <b>Панель владельца</b>
@@ -41,16 +47,17 @@
     <br>
     <!-- Основной таймер -->
     <Timer :time="timerTime" :is-on-pause="gameIsOnPause || gameIsOnVoting" />
+    <br>
     <!-- Таймер для голосования -->
     <div v-show="gameIsOnVoting">
       <Timer :time="additionalTimerTime" :is-on-pause="gameIsOnPause" />
-      <b>{{ voting.defendantUsername }}</b>
-      <div v-show="username !== voting.defendantUsername && username !== voting.accuserUsername">
+      <b>{{ voting.defendantUsername }} обвиняется в шпионаже</b>
+      <div v-show="iAmPlayer && ![voting.defendantUsername, voting.accuserUsername].includes(username)">
         <button @click="voteAgainstPlayer(true)">
-          Да
+          Согласиться
         </button>
         <button @click="voteAgainstPlayer(false)">
-          Нет
+          Не согласиться
         </button>
       </div>
     </div>
@@ -59,7 +66,7 @@
       <div v-if="gameIsOnBrief">
         <b>Перерыв между раундами</b>
       </div>
-      <div v-else-if="iAmWatcher">
+      <div v-else-if="!iAmPlayer">
         <b>Вы зритель и не знаете подробностей раунда</b>
       </div>
       <div v-else>
@@ -109,6 +116,7 @@ export default {
       gameIsOnSpyChance: false,
       player: null,
       players: [],
+      winners: [],
       location: null,
       voting: {
         defendantUsername: null,
@@ -127,21 +135,11 @@ export default {
     }
   },
   computed: {
-    iAmOwner () {
-      return (this.myUser ?? {}).isOwner
-    },
-    iAmWatcher () {
-      return (this.myUser ?? {}).isWatcher
-    },
-    myUser () {
-      return this.users.find(user => user.username === this.username)
-    },
-    watchers () {
-      return this.users.filter(user => user.isWatcher)
-    },
-    playersFromUsers () {
-      return this.users.filter(user => !user.isWatcher)
-    },
+    iAmOwner () { return this.myUser.isOwner },
+    iAmPlayer () { return this.gameIsRunning ? this.players.some(p => p.username === this.username) : !this.myUser.isWatcher },
+    myUser () { return this.users.find(user => user.username === this.username) ?? {} },
+    watchers () { return this.users.filter(user => user.isWatcher) },
+    playersFromUsers () { return this.users.filter(user => !user.isWatcher) },
     username: {
       get () { return this.$store.getters.getUsername },
       set (username) { this.$store.commit('SET_USERNAME', username) }
@@ -152,70 +150,23 @@ export default {
       if (!this.username) { return }
       this.joinRoom()
     },
-    'ioData.users' (users) {
-      this.users = users
-      consolaGlobalInstance.log('users', users)
-    },
-    'ioData.rename' (username) {
-      this.username = username
-      consolaGlobalInstance.log('rename', username)
-    },
-    'ioData.locations' (locations) {
-      this.locations = locations
-      consolaGlobalInstance.log('locations', locations)
-    },
-    'ioData.ownerKey' (ownerKey) {
-      this.ownerKey = ownerKey
-      consolaGlobalInstance.log('ownerKey', ownerKey)
-    },
-    'ioData.gameRunningFlag' (gameRunningFlag) {
-      this.gameIsRunning = gameRunningFlag
-      consolaGlobalInstance.log('gameIsRunning', gameRunningFlag)
-    },
-    'ioData.gamePauseFlag' (gamePauseFlag) {
-      this.gameIsOnPause = gamePauseFlag
-      consolaGlobalInstance.log('gameIsOnPause', gamePauseFlag)
-    },
-    'ioData.gameBriefFlag' (gameBriefFlag) {
-      this.gameIsOnBrief = gameBriefFlag
-      consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag)
-    },
-    'ioData.gameVotingFlag' (gameVotingFlag) {
-      this.gameIsOnVoting = gameVotingFlag
-      consolaGlobalInstance.log('gameIsOnVoting', gameVotingFlag)
-    },
-    'ioData.gameSpyChanceFlag' (gameSpyChanceFlag) {
-      this.gameIsOnSpyChance = gameSpyChanceFlag
-      consolaGlobalInstance.log('gameIsOnSpyChance', gameSpyChanceFlag)
-    },
-    'ioData.roundId' (roundId) {
-      this.roundId = roundId
-      consolaGlobalInstance.log('roundId', roundId)
-    },
-    'ioData.players' (players) {
-      this.players = players
-      consolaGlobalInstance.log('players', players)
-    },
-    'ioData.player' (player) {
-      this.player = player
-      consolaGlobalInstance.log('player', player)
-    },
-    'ioData.location' (location) {
-      this.location = location
-      consolaGlobalInstance.log('location', location)
-    },
-    'ioData.timerTime' (timerTime) {
-      this.timerTime = timerTime
-      consolaGlobalInstance.log('timerTime', timerTime)
-    },
-    'ioData.additionalTimerTime' (additionalTimerTime) {
-      this.additionalTimerTime = additionalTimerTime
-      consolaGlobalInstance.log('additionalTimerTime', additionalTimerTime)
-    },
-    'ioData.voting' (voting) {
-      this.voting = voting
-      consolaGlobalInstance.log('voting', voting)
-    }
+    'ioData.users' (users) { this.users = users; consolaGlobalInstance.log('users', users) },
+    'ioData.rename' (username) { this.username = username; consolaGlobalInstance.log('rename', username) },
+    'ioData.locations' (locations) { this.locations = locations; consolaGlobalInstance.log('locations', locations) },
+    'ioData.ownerKey' (ownerKey) { this.ownerKey = ownerKey; consolaGlobalInstance.log('ownerKey', ownerKey) },
+    'ioData.gameRunningFlag' (gameRunningFlag) { this.gameIsRunning = gameRunningFlag; consolaGlobalInstance.log('gameIsRunning', gameRunningFlag) },
+    'ioData.gamePauseFlag' (gamePauseFlag) { this.gameIsOnPause = gamePauseFlag; consolaGlobalInstance.log('gameIsOnPause', gamePauseFlag) },
+    'ioData.gameBriefFlag' (gameBriefFlag) { this.gameIsOnBrief = gameBriefFlag; consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag) },
+    'ioData.gameVotingFlag' (gameVotingFlag) { this.gameIsOnVoting = gameVotingFlag; consolaGlobalInstance.log('gameIsOnVoting', gameVotingFlag) },
+    'ioData.gameSpyChanceFlag' (gameSpyChanceFlag) { this.gameIsOnSpyChance = gameSpyChanceFlag; consolaGlobalInstance.log('gameIsOnSpyChance', gameSpyChanceFlag) },
+    'ioData.roundId' (roundId) { this.roundId = roundId; consolaGlobalInstance.log('roundId', roundId) },
+    'ioData.players' (players) { this.players = players; consolaGlobalInstance.log('players', players) },
+    'ioData.player' (player) { this.player = player; consolaGlobalInstance.log('player', player) },
+    'ioData.location' (location) { this.location = location; consolaGlobalInstance.log('location', location) },
+    'ioData.timerTime' (timerTime) { this.timerTime = timerTime; consolaGlobalInstance.log('timerTime', timerTime) },
+    'ioData.additionalTimerTime' (additionalTimerTime) { this.additionalTimerTime = additionalTimerTime; consolaGlobalInstance.log('additionalTimerTime', additionalTimerTime) },
+    'ioData.voting' (voting) { this.voting = voting; consolaGlobalInstance.log('voting', voting) },
+    'ioData.winners' (winners) { this.winners = winners; consolaGlobalInstance.log('winners', winners) }
   },
   mounted () {
     this.socket = this.$nuxtSocket({
@@ -232,6 +183,7 @@ export default {
         username: this.username
       })
     },
+    // TODO: На клиенте расширить проверки состояния комнаты перед отправкой запросов
     become (becomeWatcher) {
       if (this.gameIsRunning || this.myUser.isWatcher === becomeWatcher) { return }
       this.ioApi.become({
@@ -302,5 +254,6 @@ export default {
 .temp-container {
   padding: 5px;
   outline: #1400ff 1px solid;
+  width: fit-content;
 }
 </style>
