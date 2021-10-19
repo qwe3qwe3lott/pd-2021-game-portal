@@ -22,11 +22,12 @@
       Добавить локацию
     </button>
     <div class="export-list-location">
-      <button @click="exportJSON">Экспорт списка локаций</button>
+      <button @click="exportJSON">
+        Экспорт списка локаций
+      </button>
     </div>
     <div class="import-list-location">
-      <input id="file" type="file" accept=".json"/>
-      <button @click="importJSON">Импорт списка локаций</button>
+      <input type="file" accept=".json" @change="importJSON">
     </div>
   </div>
 </template>
@@ -49,23 +50,27 @@ export default {
   },
   computed: {
     ...mapGetters('spy', [
-      'getLocations', 'getRequiredLocations'
+      'getLocations', 'getRequiredLocations', 'getLocationsForExportToJSON'
     ])
   },
   methods: {
     ...mapMutations('spy', [
-      'UPLOAD_LOCATION',
+      'REPLACE_LOCATIONS',
       'ADD_LOCATION'
     ]),
     exportJSON () {
-      const data = JSON.stringify(this.getLocations)
+      const data = JSON.stringify(this.getLocationsForExportToJSON)
       const blob = new Blob([data], { type: '' })
-      FileSaver.saveAs(blob, 'ListLocation.json')
+      FileSaver.saveAs(blob, 'LocationsList.json')
     },
-    async importJSON () {
-      const file = document.getElementById('file').files[0]
+    async importJSON (event) {
+      // TODO: Более хорошая проверка файла и его содержимого
+      if (!event.target.files[0]) { return }
+      const file = event.target.files[0]
       const dataFromFile = await new Response(file).text()
-      this.UPLOAD_LOCATION(JSON.parse(dataFromFile))
+      let locations = JSON.parse(dataFromFile)
+      locations = locations.filter(location => location.title && location.roles)
+      this.REPLACE_LOCATIONS(locations)
     },
     async createRoom () {
       this.errorMessage = ''
