@@ -16,26 +16,11 @@
 export default {
   name: 'PlayerCard',
   props: {
-    username: {
-      type: String,
-      default: () => ''
-    },
-    isOwner: {
-      type: Boolean,
-      default: () => false
-    },
-    isOffline: {
-      type: Boolean,
-      default: () => false
-    },
-    score: {
-      type: Number,
-      default: () => 0
-    },
-    allowToVote: {
-      type: Boolean,
-      default: () => false
-    }
+    username: { type: String, default: () => '' },
+    isOwner: { type: Boolean, default: () => false },
+    isOffline: { type: Boolean, default: () => false },
+    score: { type: Number, default: () => 0 },
+    allowToVote: { type: Boolean, default: () => false }
   }
 }
 </script>

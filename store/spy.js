@@ -23,22 +23,21 @@ export const state = () => ({
   ],
   counter: 20,
   roomOptions: [
-    { key: 'spiesCount', value: 1, min: 1, max: 100, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество шпионов' },
-    { key: 'spyWinPoints', value: 4, min: 0, max: 100, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество очков, начисляемых шпиону за победу' },
-    { key: 'spyTimeoutPoints', value: 1, min: 0, max: 100, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество очков, начисляемых шпиону за тайм-аут' },
-    { key: 'playerWinPoints', value: 1, min: 0, max: 100, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество очков, начисляемых не шпиону за победу' },
-    { key: 'playerBonusPoints', value: 1, min: 0, max: 100, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество очков, начисляемых не шпиону за победу после инициирования голосования' },
-    { key: 'playerTimeoutPoints', value: 0, min: 0, max: 100, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество очков, начисляемых не шпиону за тайм-аут' },
-    { key: 'winScore', value: 10, min: 1, max: 100, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество очков для победы' },
-    { key: 'roundTime', value: 600, min: 5, max: 1000, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество секунд раунда' },
-    { key: 'votingTime', value: 20, min: 5, max: 60, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество секунд голосования' },
-    { key: 'briefTime', value: 7, min: 5, max: 60, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество секунд перерыва' },
-    { key: 'spyChanceTime', value: 10, min: 5, max: 60, placeholder: `От ${() => this.min} до ${() => this.max}`, description: 'Количество секунд для шпиона после раскрытия' }
+    { key: 'spiesCount', value: 1, min: 1, max: 100, description: 'Количество шпионов' },
+    { key: 'spyWinPoints', value: 4, min: 0, max: 100, description: 'Количество очков, начисляемых шпиону за победу' },
+    { key: 'spyTimeoutPoints', value: 1, min: 0, max: 100, description: 'Количество очков, начисляемых шпиону за тайм-аут' },
+    { key: 'playerWinPoints', value: 1, min: 0, max: 100, description: 'Количество очков, начисляемых не шпиону за победу' },
+    { key: 'playerBonusPoints', value: 1, min: 0, max: 100, description: 'Количество очков, начисляемых не шпиону за победу после инициирования голосования' },
+    { key: 'playerTimeoutPoints', value: 0, min: 0, max: 100, description: 'Количество очков, начисляемых не шпиону за тайм-аут' },
+    { key: 'winScore', value: 10, min: 1, max: 100, description: 'Количество очков для победы' },
+    { key: 'roundTime', value: 600, min: 5, max: 1000, description: 'Количество секунд раунда' },
+    { key: 'votingTime', value: 20, min: 5, max: 60, description: 'Количество секунд голосования' },
+    { key: 'briefTime', value: 7, min: 5, max: 60, description: 'Количество секунд перерыва' },
+    { key: 'spyChanceTime', value: 10, min: 5, max: 60, description: 'Количество секунд для шпиона после раскрытия' }
   ]
 })
 
 export const getters = {
-  getLocations: state => state.locations,
   getLocationsForExportToJSON: state => state.locations.map(location => ({ title: location.title, img: location.img, roles: location.roles })),
   getRequiredLocations: state => state.locations.filter(location => location.requires)
 }
@@ -53,19 +52,12 @@ export const mutations = {
     if (!location) { return }
     location.requires = payload.flag
   },
-  ADD_LOCATION (state, payload) {
+  ADD_LOCATION: (state) => {
     if (state.locations.length < 100) {
-      state.locations.push(
-        {
-          id: state.counter++,
-          title: payload.name,
-          img: payload.url,
-          roles: payload.roles,
-          requires: true
-        })
+      state.locations.push({ id: state.counter++, title: '', img: '', roles: Array(5).fill(''), requires: true })
     }
   },
-  REPLACE_LOCATIONS (state, locations) {
+  REPLACE_LOCATIONS: (state, locations) => {
     locations.forEach((location, index) => {
       location.id = index
       location.requires = true
@@ -73,22 +65,22 @@ export const mutations = {
     state.locations = locations
     state.counter = locations.length
   },
-  UPDATE_ROLE (state, payload) {
+  UPDATE_ROLE: (state, payload) => {
     const location = state.locations.find(loc => loc.id === payload.locationId)
     if (!location) { return }
     location.roles[payload.index] = payload.role
   },
-  UPDATE_TITLE (state, payload) {
+  UPDATE_TITLE: (state, payload) => {
     const location = state.locations.find(loc => loc.id === payload.locationId)
     if (!location) { return }
     location.title = payload.title
   },
-  UPDATE_IMAGE (state, payload) {
+  UPDATE_IMAGE: (state, payload) => {
     const location = state.locations.find(loc => loc.id === payload.locationId)
     if (!location) { return }
     location.img = payload.image
   },
-  DELETE_LOCATION (state, payload) {
+  DELETE_LOCATION: (state, payload) => {
     state.locations = state.locations.filter(location => location.id !== payload.locationId)
   }
 }
