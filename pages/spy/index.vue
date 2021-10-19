@@ -23,11 +23,20 @@
     <button @click="addLocation">
       Добавить локацию
     </button>
+    <div class="export-list-location">
+      <button @click="exportJSON">
+        Экспорт списка локаций
+      </button>
+    </div>
+    <div class="import-list-location">
+      <input type="file" accept=".json" @change="importJSON">
+    </div>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapMutations, mapState } from 'vuex'
+import FileSaver from 'file-saver'
 import LocationCreationCard from '@/components/spy/LocationCreationCard'
 import OptionsCreationCard from '@/components/spy/OptionsCreationCard'
 export default {
@@ -44,7 +53,7 @@ export default {
   },
   computed: {
     ...mapGetters('spy', [
-      'getLocations', 'getRequiredLocations'
+      'getLocations', 'getRequiredLocations', 'getLocationsForExportToJSON'
     ]),
     ...mapState('spy', [
       'roomOptions'
@@ -52,8 +61,22 @@ export default {
   },
   methods: {
     ...mapMutations('spy', [
-      'ADD_LOCATION'
+      'REPLACE_LOCATIONS', 'ADD_LOCATION'
     ]),
+    exportJSON () {
+      const data = JSON.stringify(this.getLocationsForExportToJSON)
+      const blob = new Blob([data], { type: '' })
+      FileSaver.saveAs(blob, 'LocationsList.json')
+    },
+    async importJSON (event) {
+      // TODO: Более хорошая проверка файла и его содержимого
+      if (!event.target.files[0]) { return }
+      const file = event.target.files[0]
+      const dataFromFile = await new Response(file).text()
+      let locations = JSON.parse(dataFromFile)
+      locations = locations.filter(location => location.title && location.roles)
+      this.REPLACE_LOCATIONS(locations)
+    },
     async createRoom () {
       this.errorMessage = ''
       if (this.getRequiredLocations.length < this.locationsRequiredAtLess) {

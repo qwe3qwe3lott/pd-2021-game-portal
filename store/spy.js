@@ -39,6 +39,7 @@ export const state = () => ({
 
 export const getters = {
   getLocations: state => state.locations,
+  getLocationsForExportToJSON: state => state.locations.map(location => ({ title: location.title, img: location.img, roles: location.roles })),
   getRequiredLocations: state => state.locations.filter(location => location.requires)
 }
 export const mutations = {
@@ -63,6 +64,14 @@ export const mutations = {
           requires: true
         })
     }
+  },
+  REPLACE_LOCATIONS (state, locations) {
+    locations.forEach((location, index) => {
+      location.id = index
+      location.requires = true
+    })
+    state.locations = locations
+    state.counter = locations.length
   },
   UPDATE_ROLE (state, payload) {
     const location = state.locations.find(loc => loc.id === payload.locationId)
