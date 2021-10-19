@@ -70,11 +70,10 @@ export default {
           return
         }
         if (location.roles.filter(role => role.trim() !== '').length === 0) {
-          this.message = `Укажите хотя бы одну роль на выбранной локацие - ${location.title}`
+          this.errorMessage = `Укажите хотя бы одну роль на выбранной локацие - ${location.title}`
           return
         }
       }
-      // TODO: настройки комнаты
       const originOptions = {
         owner: this.$store.getters.getUsername,
         locations: this.getLocations.filter(location => location.requires).map(location => ({

@@ -1,44 +1,46 @@
-const consolaGlobalInstance = require('consola')
 const MyEvent = require('../MyEvent')
 const Util = require('../Util')
 module.exports = class SpyRoom {
-  static #additionalUsernameChar = ')'
-  static #ownerKeyLength = 6
-  static #spyKeyLength = 6
-  static #minPlayersCount = 3
+  static #ADDITIONAL_USERNAME_CHAR = ')'
+  static #OWNER_KEY_LENGTH = 6
+  static #SPY_KEY_LENGTH = 6
+  static #MIN_PLAYERS_COUNT = 3
+  static #MAX_SECONDS_ON_PAUSE = 60 * 60
 
-  #users
-  #id
-  #owner
+  #users; get users () { return this.#users }
+  #id; get id () { return this.#id }
+  #owner; get owner () { return this.#owner }
   #ownerKey
-  #isRunning
-  #isOnPause
+  #isRunning; get isRunning () { return this.#isRunning }
+  #isOnPause; get isOnPause () { return this.#isOnPause }
   #isOnBrief
   #isOnVoting
   #isOnSpyChance
-  #locations
+  #locations; get locations () { return this.#locations }
   #options
   #state
-  #eventUsersChanged
-  #eventUserRenamed
-  #eventGameStarted
-  #eventGameOvered
-  #eventRoundStarted
-  #eventRoundOvered
-  #eventBriefStarted
-  #eventBriefOvered
-  #eventVotingStarted
-  #eventVotingOvered
-  #eventGamePaused
-  #eventGameResumed
-  #eventPlayerSpentVote
+  #eventUserJoined; get eventUserJoined () { return this.#eventUserJoined }
+  #eventUsersChanged; get eventUsersChanged () { return this.#eventUsersChanged }
+  #eventUserRenamed; get eventUserRenamed () { return this.#eventUserRenamed }
+  #eventGameStarted; get eventGameStarted () { return this.#eventGameStarted }
+  #eventGameOvered; get eventGameOvered () { return this.#eventGameOvered }
+  #eventRoundStarted; get eventRoundStarted () { return this.#eventRoundStarted }
+  #eventRoundOvered; get eventRoundOvered () { return this.#eventRoundOvered }
+  #eventBriefStarted; get eventBriefStarted () { return this.#eventBriefStarted }
+  #eventBriefOvered; get eventBriefOvered () { return this.#eventBriefOvered }
+  #eventVotingStarted; get eventVotingStarted () { return this.#eventVotingStarted }
+  #eventVotingOvered; get eventVotingOvered () { return this.#eventVotingOvered }
+  #eventGamePaused; get eventGamePaused () { return this.#eventGamePaused }
+  #eventGameResumed; get eventGameResumed () { return this.#eventGameResumed }
+  #eventPlayerSpentVote; get eventPlayerSpentVote () { return this.#eventPlayerSpentVote }
   #resolve
   #intervalId
+  #accumTimeOnPause
 
   constructor (id, owner, options, locations) {
     this.#id = id
     this.#owner = owner
-    this.#ownerKey = Util.generateRandomString(SpyRoom.#ownerKeyLength)
+    this.#ownerKey = Util.generateRandomString(SpyRoom.#OWNER_KEY_LENGTH)
     this.#users = []
     this.#isRunning = false
     this.#isOnPause = false
@@ -79,6 +81,7 @@ module.exports = class SpyRoom {
       }
     }
 
+    this.#eventUserJoined = new MyEvent(this)
     this.#eventUsersChanged = new MyEvent(this)
     this.#eventUserRenamed = new MyEvent(this)
     this.#eventGameStarted = new MyEvent(this)
@@ -97,111 +100,88 @@ module.exports = class SpyRoom {
     this.#intervalId = null
   }
 
-  addUser (username, socket) {
+  // Добавление пользователя в массив пользователей с последующим вызовом событий для оповещения пользователей в комнате
+  addUser (username, tempUserKey) {
+    // Переименнование пользователя при совпадении ников
     if (this.#users.some(user => user.username === username)) {
-      const oldUsername = username
       while (this.#users.some(user => user.username === username)) {
-        username += SpyRoom.#additionalUsernameChar
+        username += SpyRoom.#ADDITIONAL_USERNAME_CHAR
       }
-      this.#eventUserRenamed.notify({
-        socket,
-        oldUsername,
-        newUsername: username
-      })
+      this.#eventUserRenamed.notify({ tempUserKey, username })
     }
     const isOwner = (username === this.#owner)
     this.#users.push({
       username,
-      isWatcher: !(this.#state.players.some(player => player.username === username)),
+      isWatcher: !this.#isRunning || !(this.#state.players.some(player => player.username === username)),
       isOwner
     })
-    this.#eventUsersChanged.notify({
-      users: this.#users
-    })
-    if (isOwner) {
-      socket.emit('ownerKey', { data: this.#ownerKey })
+    this.#eventUsersChanged.notify({ users: this.#users })
+    // Формирование пакета данных зашедшему в комнату пользователю в зависимости от состояния игры
+    const payload = {
+      locations: this.#locations,
+      gameRunningFlag: this.#isRunning
     }
-    socket.emit('locations', { data: this.#locations })
-    socket.emit('gameRunningFlag', { data: this.#isRunning })
-    if (!this.#isRunning) { return }
-    socket.emit('gamePauseFlag', { data: this.#isOnPause })
-    socket.emit('gameBriefFlag', { data: this.#isOnBrief })
-    socket.emit('gameVotingFlag', { data: this.#isOnVoting })
-    socket.emit('gameSpyChanceFlag', { data: this.#isOnSpyChance })
-    socket.emit('roundId', { data: this.#state.roundId })
-    socket.emit('players', {
-      data: this.#state.players.map(player => ({
+    if (isOwner) { payload.ownerKey = this.#ownerKey }
+    if (this.#isRunning) {
+      payload.gamePauseFlag = this.#isOnPause
+      payload.gameBriefFlag = this.#isOnBrief
+      payload.gameVotingFlag = this.#isOnVoting
+      payload.gameSpyChanceFlag = this.#isOnSpyChance
+      payload.players = this.#state.players.map(player => ({
         username: player.username,
         isOwner: player.isOwner,
         score: player.score
       }))
-    })
-    socket.emit('timerTime', {
-      data: {
+      payload.timerTime = {
         originTime: this.#isOnBrief ? this.#options.briefTime : this.#options.roundTime,
         currentTime: this.#isOnBrief ? this.#state.briefTime : this.#state.roundTime
       }
-    })
-    if (this.#isOnVoting) {
-      socket.emit('additionalTimerTime', {
-        data: {
+      if (this.#isOnVoting) {
+        payload.additionalTimerTime = {
           originTime: this.#options.votingTime,
           currentTime: this.#state.votingTime
         }
-      })
-      socket.emit('voting', {
-        data: {
+        payload.voting = {
           defendantUsername: this.#state.voting.defendantUsername,
           accuserUsername: this.#state.voting.accuserUsername
         }
-      })
+      }
+      const player = this.#state.players.find(player => player.username === username)
+      if (player) {
+        payload.player = player
+        payload.location = (player.isSpy ? null : this.#state.location)
+      }
     }
-    const player = this.#state.players.find(player => player.username === username)
-    if (!player) { return }
-    socket.emit('player', { data: player })
-    socket.emit('location', { data: (player.isSpy ? null : this.#state.location) })
+    this.#eventUserJoined.notify(payload)
   }
 
   removeUser (username) {
     const userId = this.#users.findIndex(user => user.username === username)
-    if (userId !== -1) {
-      this.#users.splice(userId, 1)
-      this.#eventUsersChanged.notify({
-        users: this.#users
-      })
-    }
+    if (userId === -1) { return }
+    this.#users.splice(userId, 1)
+    this.#eventUsersChanged.notify({ users: this.#users })
   }
 
-  makeUserWatcher (username) {
-    this.#makeUser(username, true)
-  }
-
-  makeUserPlayer (username) {
-    this.#makeUser(username, false)
-  }
-
-  #makeUser = (username, makeWatcher) => {
-    for (let i = 0; i < this.#users.length; i++) {
-      if (this.#users[i].username === username) {
-        this.#users[i].isWatcher = makeWatcher
-        this.#eventUsersChanged.notify({
-          users: this.#users
-        })
-      }
-    }
+  makeWatcher (username) { this.#makeUser(username, true) }
+  makePlayer (username) { this.#makeUser(username, false) }
+  #makeUser = (username, toMakeWatcher) => {
+    const user = this.#users.find(user => user.username === username)
+    if (!user) { return }
+    user.isWatcher = toMakeWatcher
+    this.#eventUsersChanged.notify({ users: this.#users })
   }
 
   async startGame (ownerKey) {
     if (ownerKey !== this.#ownerKey || this.#isRunning) { return }
     // На время тестов изменено
-    // if (this.#playersCount() < SpyRoom.#minPlayersCount) { return }
+    // if (this.#playersCount() < SpyRoom.#MIN_PLAYERS_COUNT) { return }
     if (this.#playersCount() < 1) { return }
     this.#isRunning = true
     this.#state.lastStartMoment = Date.now()
     // Все игроки из массива пользователей вносятся в список игроков в состояние игры
     // Это позволяет сохранять информацию об игроке, даже если он отключился во время игры
     // До завершения игры перечень игроков не меняется
-    this.#state.players = []
+    this.#state.players.length = 0
     for (const player of this.#users.filter(user => !user.isWatcher)) {
       this.#state.players.push({
         username: player.username,
@@ -209,9 +189,7 @@ module.exports = class SpyRoom {
         score: 0
       })
     }
-    this.#eventGameStarted.notify({
-      players: this.#state.players
-    })
+    this.#eventGameStarted.notify({ players: this.#state.players })
     // Цикл выполняется до тек пор, пока один из игроков не наберёт нужное количество очков
     // Каждая итерация цикла знаменует одни раунд партии
     this.#state.roundId = 0
@@ -222,25 +200,19 @@ module.exports = class SpyRoom {
       if (this.#state.players.length < this.#options.spiesCount) {
         this.#options.spiesCount = this.#state.players.length
       }
-      this.#state.players.forEach((player) => {
-        player.isSpy = false
-      })
-      do {
-        this.#state.players[Util.getRandomArrayIndex(this.#state.players.length)].isSpy = true
-      } while (this.#state.players.filter(players => players.isSpy) < this.#options.spiesCount)
+      this.#state.players.forEach((player) => { player.isSpy = false })
+      do { this.#state.players[Util.getRandomArrayIndex(this.#state.players.length)].isSpy = true }
+      while (this.#state.players.filter(players => players.isSpy) < this.#options.spiesCount)
       for (const player of this.#state.players) {
         player.votes = this.#state.players.filter(p => p.username !== player.username).map(player => player.username)
         player.role = player.isSpy ? null : this.#state.location.roles[Util.getRandomArrayIndex(this.#state.location.roles.length)]
-        player.spyKey = player.isSpy ? Util.generateRandomString(SpyRoom.#spyKeyLength) : null
+        player.spyKey = player.isSpy ? Util.generateRandomString(SpyRoom.#SPY_KEY_LENGTH) : null
       }
       this.#eventRoundStarted.notify({
         roundId: this.#state.roundId,
         players: this.#state.players,
         location: this.#state.location,
-        timerTime: {
-          originTime: this.#options.roundTime,
-          currentTime: this.#options.roundTime
-        }
+        timerTime: { originTime: this.#options.roundTime, currentTime: this.#options.roundTime }
       })
       // Запуск таймера времени раунда
       this.#state.roundTime = this.#options.roundTime
@@ -253,7 +225,7 @@ module.exports = class SpyRoom {
               if (this.#state.roundTime-- <= 0 && this.#resolve instanceof Function) {
                 this.#resolveTimer({ isTimeout: true })
               }
-            }
+            } else { this.#waitOnPause() }
           }, 1000)
         })
         if (res.toStopGame || res.locationWasNamed) { break }
@@ -264,14 +236,8 @@ module.exports = class SpyRoom {
           this.#state.voting.votes = [res.accuserUsername]
           this.#isOnVoting = true
           this.#eventVotingStarted.notify({
-            timerTime: {
-              originTime: this.#options.votingTime,
-              currentTime: this.#options.votingTime
-            },
-            voting: {
-              defendantUsername: res.defendantUsername,
-              accuserUsername: res.accuserUsername
-            }
+            timerTime: { originTime: this.#options.votingTime, currentTime: this.#options.votingTime },
+            voting: { defendantUsername: res.defendantUsername, accuserUsername: res.accuserUsername }
           })
           res = await new Promise((resolve) => {
             this.#resolve = resolve
@@ -280,7 +246,7 @@ module.exports = class SpyRoom {
                 if (this.#state.votingTime-- <= 0 && this.#resolve instanceof Function) {
                   this.#resolveTimer({ isTimeout: true })
                 }
-              }
+              } else { this.#waitOnPause() }
             }, 1000)
           })
           // Если против игрока проголосовали все другие игроки
@@ -289,27 +255,19 @@ module.exports = class SpyRoom {
             const spyLose = this.#state.players.find(player => player.username === this.#state.voting.defendantUsername).isSpy
             // По результату голосования начисляем очки игрокам
             if (spyLose) {
-              for (const player of this.#state.players.filter(player => player.username !== this.#state.voting.defendantUsername)) {
-                player.score += player.username === this.#state.voting.accuserUsername ? this.#options.playerWinPoints + this.#options.playerBonusPoints : this.#options.playerWinPoints
-              }
+              this.#state.players.filter(player => player.username !== this.#state.voting.defendantUsername)
+                .forEach((player) => { player.score += player.username === this.#state.voting.accuserUsername ? this.#options.playerWinPoints + this.#options.playerBonusPoints : this.#options.playerWinPoints })
             } else {
-              for (const player of this.#state.players.filter(player => player.isSpy)) {
-                player.score += this.#options.spyWinPoints
-              }
+              this.#state.players.filter(player => player.isSpy).forEach((player) => { player.score += this.#options.spyWinPoints })
             }
             // Для выхода из цикла ПОСЛЕ данной итерации
             this.#state.roundTime = 0
           }
           this.#state.voting.defendantUsername = null
           this.#state.voting.accuserUsername = null
-          this.#state.voting.votes = []
+          this.#state.voting.votes.length = 0
           this.#isOnVoting = false
-          this.#eventVotingOvered.notify({
-            timerTime: {
-              originTime: this.#options.roundTime,
-              currentTime: this.#state.roundTime
-            }
-          })
+          this.#eventVotingOvered.notify({ timerTime: { originTime: this.#options.roundTime, currentTime: this.#state.roundTime } })
           if (res.toStopGame) { break }
         }
       }
@@ -318,9 +276,7 @@ module.exports = class SpyRoom {
       if (res.toStopGame) { break }
       // Если раунд закончился по истечении времени
       if (res.isTimeout) {
-        for (const player of this.#state.players) {
-          player.score += player.isSpy ? this.#options.spyTimeoutPoints : this.#options.playerTimeoutPoints
-        }
+        this.#state.players.forEach((player) => { player.score += player.isSpy ? this.#options.spyTimeoutPoints : this.#options.playerTimeoutPoints })
       }
       this.#eventRoundOvered.notify({
         players: this.#state.players.map(player => ({
@@ -332,12 +288,7 @@ module.exports = class SpyRoom {
       // Если кто-то выиграл
       if (this.#victoryCondition()) { break }
       this.#isOnBrief = true
-      this.#eventBriefStarted.notify({
-        timerTime: {
-          originTime: this.#options.briefTime,
-          currentTime: this.#options.briefTime
-        }
-      })
+      this.#eventBriefStarted.notify({ timerTime: { originTime: this.#options.briefTime, currentTime: this.#options.briefTime } })
       // Запуск таймера времени перерыва между раундами
       this.#state.briefTime = this.#options.briefTime
       res = await new Promise((resolve) => {
@@ -347,7 +298,7 @@ module.exports = class SpyRoom {
             if (this.#state.briefTime-- <= 0 && this.#resolve instanceof Function) {
               this.#resolveTimer({ isTimeout: true })
             }
-          }
+          } else { this.#waitOnPause() }
         }, 1000)
       })
       this.#isOnBrief = false
@@ -355,7 +306,7 @@ module.exports = class SpyRoom {
       if (res.toStopGame) { break }
     }
     this.#isRunning = false
-    this.#eventGameOvered.notify({})
+    this.#eventGameOvered.notify({ winners: this.#getWinnersUsernames() })
   }
 
   #resolveTimer = (payload) => {
@@ -365,27 +316,26 @@ module.exports = class SpyRoom {
   }
 
   #victoryCondition = () => this.#state.players.some(player => player.score >= this.#options.winScore)
+  #getWinnersUsernames = () => this.#getWinners().map(winner => winner.username)
+  #getWinners = () => this.#state.players.filter(player => player.score >= this.#options.winScore)
 
   // Указание локации шпионом во время игры
   pinpointLocation ({ spyKey, username, location, roundId }) {
     if (!this.#isRunning || this.isOnPause || this.#isOnBrief || this.#isOnVoting || !(this.#resolve instanceof Function)) { return }
-    consolaGlobalInstance.log('pinpointLocation', 'ok')
     const spy = this.#state.players.find(player => player.username === username)
     if (!spy || spy.spyKey !== spyKey || roundId !== this.#state.roundId) { return }
     if (this.#state.location.title === location.title) {
       spy.score += this.#options.spyWinPoints
     } else {
       for (const player of this.#state.players) {
-        if (player.username !== spy.username) {
-          player.score += this.#options.playerWinPoints
-        }
+        if (player !== spy) { player.score += this.#options.playerWinPoints }
       }
     }
     this.#resolveTimer({ locationWasNamed: true })
   }
 
   startVotingAgainstPlayer ({ accuserUsername, defendantUsername, roundId }) {
-    if (!this.#isRunning || this.isOnPause || this.#isOnBrief || this.#isOnVoting || !(this.#resolve instanceof Function)) { return }
+    if (!this.#isRunning || this.isOnPause || this.#isOnBrief || this.#isOnVoting || this.#isOnSpyChance || !(this.#resolve instanceof Function)) { return }
     const player = this.#state.players.find(player => player.username === accuserUsername)
     if (!player || roundId !== this.#state.roundId) { return }
     const voteIndex = player.votes.findIndex(vote => vote === defendantUsername)
@@ -396,19 +346,24 @@ module.exports = class SpyRoom {
   }
 
   voteAgainstPlayer ({ username, defendantUsername, voteFlag, roundId }) {
-    consolaGlobalInstance.log('voteAgainstPlayer', 'start')
-    if (!this.#isRunning || this.isOnPause || this.#isOnBrief || !this.#isOnVoting || !(this.#resolve instanceof Function)) { return }
+    if (!this.#isRunning || this.isOnPause || this.#isOnBrief || !this.#isOnVoting || this.#isOnSpyChance || !(this.#resolve instanceof Function)) { return }
     if (this.#state.roundId !== roundId || this.#state.voting.defendantUsername !== defendantUsername || username === this.#state.voting.defendantUsername || username === this.#state.voting.accuserUsername) { return }
-    consolaGlobalInstance.log('voteAgainstPlayer', 'ok')
     if (!voteFlag) {
       this.#resolveTimer({ toCondemn: false })
       return
     }
-    consolaGlobalInstance.log('voteAgainstPlayer', `votes: ${this.#state.voting.votes}, username: ${username}`)
-    if (this.#state.voting.votes.includes(vote => vote === username)) { return }
+    if (this.#state.voting.votes.includes(username)) { return }
     this.#state.voting.votes.push(username)
     if (this.#state.voting.votes.length + 1 >= this.#state.players.length) {
       this.#resolveTimer({ toCondemn: true })
+    }
+  }
+
+  #waitOnPause = () => {
+    if (this.#accumTimeOnPause++ > SpyRoom.#MAX_SECONDS_ON_PAUSE) {
+      this.#accumTimeOnPause = 0
+      this.isOnPause = false
+      this.#eventGameResumed.notify({})
     }
   }
 
@@ -420,34 +375,16 @@ module.exports = class SpyRoom {
   pause (ownerKey) {
     if (ownerKey !== this.#ownerKey || !this.#isRunning) { return }
     this.#isOnPause = true
+    this.#accumTimeOnPause = 0
     this.#eventGamePaused.notify({})
   }
 
   resume (ownerKey) {
     if (ownerKey !== this.#ownerKey || !this.#isRunning) { return }
     this.#isOnPause = false
+    this.#accumTimeOnPause = 0
     this.#eventGameResumed.notify({})
   }
 
   #playersCount = () => this.#users.filter(user => !user.isWatcher).length
-
-  get id () { return this.#id }
-  get owner () { return this.#owner }
-  get isRunning () { return this.#isRunning }
-  get isOnPause () { return this.#isOnPause }
-  get users () { return this.#users }
-  get locations () { return this.#locations }
-  get eventUsersChanged () { return this.#eventUsersChanged }
-  get eventUserRenamed () { return this.#eventUserRenamed }
-  get eventGameStarted () { return this.#eventGameStarted }
-  get eventGameOvered () { return this.#eventGameOvered }
-  get eventRoundStarted () { return this.#eventRoundStarted }
-  get eventRoundOvered () { return this.#eventRoundOvered }
-  get eventBriefStarted () { return this.#eventBriefStarted }
-  get eventBriefOvered () { return this.#eventBriefOvered }
-  get eventVotingStarted () { return this.#eventVotingStarted }
-  get eventVotingOvered () { return this.#eventVotingOvered }
-  get eventGamePaused () { return this.#eventGamePaused }
-  get eventGameResumed () { return this.#eventGameResumed }
-  get eventPlayerSpentVote () { return this.#eventPlayerSpentVote }
 }

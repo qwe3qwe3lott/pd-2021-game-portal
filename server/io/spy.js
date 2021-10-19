@@ -4,6 +4,7 @@ const api = require('../axios/api')
 const Room = require('../models/room.js')
 const SpyRoom = require('../objects/spy/Room')
 const { default: Data } = require(pResolve('./server/db'))
+const Util = require('../objects/Util')
 
 const API = {
   version: 1.0,
@@ -23,39 +24,26 @@ const API = {
     location: { data: undefined },
     timerTime: { data: undefined },
     additionalTimerTime: { data: undefined },
-    voting: { data: undefined }
+    voting: { data: undefined },
+    winners: { data: undefined }
   },
   methods: {
-    joinRoom: {
-      msg: { roomId: '', username: '' }
-    },
-    become: {
-      msg: { roomId: '', username: '', becomeWatcher: '' }
-    },
-    startOrResumeGame: {
-      msg: { roomId: '', ownerKey: '' }
-    },
-    pauseGame: {
-      msg: { roomId: '', ownerKey: '' }
-    },
-    stopGame: {
-      msg: { roomId: '', ownerKey: '' }
-    },
-    pinpointLocation: {
-      msg: { roomId: '', spyKey: '', username: '', location: '', roundId: '' }
-    },
-    startVotingAgainstPlayer: {
-      mgs: { roomId: '', username: '', defendantUsername: '', roundId: '' }
-    },
-    voteAgainstPlayer: {
-      mgs: { roomId: '', username: '', defendantUsername: '', voteFlag: '', roundId: '' }
-    }
+    joinRoom: { msg: { roomId: '', username: '' } },
+    become: { msg: { roomId: '', username: '', becomeWatcher: '' } },
+    startOrResumeGame: { msg: { roomId: '', ownerKey: '' } },
+    pauseGame: { msg: { roomId: '', ownerKey: '' } },
+    stopGame: { msg: { roomId: '', ownerKey: '' } },
+    pinpointLocation: { msg: { roomId: '', spyKey: '', username: '', location: '', roundId: '' } },
+    startVotingAgainstPlayer: { mgs: { roomId: '', username: '', defendantUsername: '', roundId: '' } },
+    voteAgainstPlayer: { mgs: { roomId: '', username: '', defendantUsername: '', voteFlag: '', roundId: '' } }
   }
 }
 
 const getNamespace = (roomId, username) => `spy/${roomId}/${username}`
 const getRooms = () => Data.rooms.spy
 const getRoom = roomId => Data.rooms.spy.find(room => room.id === roomId)
+const toData = value => ({ data: value })
+const emit = (socket, evt, payload) => socket.emit(evt, toData(payload[evt]))
 
 export default function Svc (socket, io) {
   return Object.freeze({
@@ -71,79 +59,108 @@ export default function Svc (socket, io) {
         getRooms().push(room)
       }
       // Подписываемся на события комнаты
+      const userJoinedHandler = room.eventUserJoined.subscribe((sender, payload) => {
+        // Удаление временного ключа для возможности переименнования пользователя при заходе в комнату
+        delete socket.tempUserKey
+        emit(socket, 'locations', payload)
+        emit(socket, 'gameRunningFlag', payload)
+        payload.ownerKey && emit(socket, 'ownerKey', payload)
+        if (payload.gameRunningFlag) {
+          emit(socket, 'gamePauseFlag', payload)
+          emit(socket, 'gameBriefFlag', payload)
+          emit(socket, 'gameVotingFlag', payload)
+          emit(socket, 'gameSpyChanceFlag', payload)
+          emit(socket, 'players', payload)
+          emit(socket, 'timerTime', payload)
+          if (payload.gameVotingFlag) {
+            emit(socket, 'additionalTimerTime', payload)
+            emit(socket, 'voting', payload)
+          }
+          if (payload.player) {
+            emit(socket, 'player', payload)
+            emit(socket, 'location', payload)
+          }
+        }
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': User joined')
+      })
       const usersChangedHandler = room.eventUsersChanged.subscribe((sender, payload) => {
-        socket.emit('users', { data: payload.users })
+        emit(socket, 'users', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got users list')
       })
       const userRenamedHandler = room.eventUserRenamed.subscribe((sender, payload) => {
-        if (socket !== payload.socket) { return }
-        socket.username = payload.newUsername
-        socket.leave(getNamespace(sender.id, payload.oldUsername))
-        socket.join(getNamespace(sender.id, payload.newUsername))
-        socket.emit('rename', { data: payload.newUsername })
+        if (socket.tempUserKey !== payload.tempUserKey) { return }
+        socket.username = payload.username
+        socket.emit('rename', toData(payload.username))
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got new username')
       })
       const gameStartedHandler = room.eventGameStarted.subscribe((sender, payload) => {
-        socket.emit('gameRunningFlag', { data: true })
-        socket.emit('players', { data: payload.players })
+        socket.emit('gameRunningFlag', toData(true))
+        socket.emit('winners', toData([]))
+        emit(socket, 'players', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game started')
       })
       const gameOveredHandler = room.eventGameOvered.subscribe((sender, payload) => {
-        socket.emit('gameRunningFlag', { data: false })
-        socket.emit('timerTime', { data: { originTime: 0, currentTime: 0 } })
+        socket.emit('gameRunningFlag', toData(false))
+        socket.emit('timerTime', toData({ originTime: 0, currentTime: 0 }))
+        emit(socket, 'winners', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game overed')
       })
       const roundStartedHandler = room.eventRoundStarted.subscribe((sender, payload) => {
         const player = payload.players.find(player => player.username === socket.username)
         if (!player) { return }
-        socket.emit('roundId', { data: payload.roundId })
-        socket.emit('player', { data: player })
-        socket.emit('location', { data: (player.isSpy ? null : payload.location) })
-        socket.emit('timerTime', { data: payload.timerTime })
+        emit(socket, 'roundId', payload)
+        socket.emit('player', toData(player))
+        socket.emit('location', toData(player.isSpy ? null : payload.location))
+        emit(socket, 'timerTime', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Round started')
       })
       const roundOveredHandler = room.eventRoundOvered.subscribe((sender, payload) => {
-        socket.emit('players', { data: payload.players })
+        emit(socket, 'players', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Round overed')
       })
       const gamePausedHandler = room.eventGamePaused.subscribe((sender, payload) => {
-        socket.emit('gamePauseFlag', { data: true })
+        socket.emit('gamePauseFlag', toData(true))
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game paused')
       })
       const gameResumedHandler = room.eventGameResumed.subscribe((sender, payload) => {
-        socket.emit('gamePauseFlag', { data: false })
+        socket.emit('gamePauseFlag', toData(false))
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Game resumed')
       })
       const briefStartedHandler = room.eventBriefStarted.subscribe((sender, payload) => {
-        socket.emit('gameBriefFlag', { data: true })
-        socket.emit('timerTime', { data: payload.timerTime })
+        socket.emit('gameBriefFlag', toData(true))
+        emit(socket, 'timerTime', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Brief started')
       })
       const briefOveredHandler = room.eventBriefOvered.subscribe((sender, payload) => {
-        socket.emit('gameBriefFlag', { data: false })
+        socket.emit('gameBriefFlag', toData(false))
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Brief overed')
       })
       const votingStartedHandler = room.eventVotingStarted.subscribe((sender, payload) => {
-        socket.emit('gameVotingFlag', { data: true })
-        socket.emit('additionalTimerTime', { data: payload.timerTime })
-        socket.emit('voting', { data: payload.voting })
+        socket.emit('gameVotingFlag', toData(true))
+        socket.emit('additionalTimerTime', toData(payload.timerTime))
+        emit(socket, 'voting', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Voting started')
       })
       const votingOveredHandler = room.eventVotingOvered.subscribe((sender, payload) => {
-        socket.emit('gameVotingFlag', { data: false })
-        socket.emit('timerTime', { data: payload.timerTime })
+        socket.emit('gameVotingFlag', toData(false))
+        emit(socket, 'timerTime', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Voting overed')
       })
       const playerSpentVoteHandler = room.eventPlayerSpentVote.subscribe((sender, payload) => {
         if (payload.player.username !== socket.username) { return }
-        socket.emit('player', { data: payload.player })
+        emit(socket, 'player', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Player spent vote')
       })
       // Добавляем пользователя в комнату
-      room.addUser(username, socket)
+      // В комнату может войти пользователь с уже задействавонным в комнате ником
+      // Поэтому создаём временный ключ для идетнификации сокета пользователя, которого возможно нужно будет переименновать
+      // После завершения входа нужно удалить ключ
+      socket.tempUserKey = Util.generateRandomString(6)
+      room.addUser(username, socket.tempUserKey)
       // Подписываем пользователя на событие отключения
       socket.once('disconnect', () => {
         room.removeUser(socket.username)
+        room.eventUserJoined.describe(userJoinedHandler)
         room.eventUsersChanged.describe(usersChangedHandler)
         room.eventUserRenamed.describe(userRenamedHandler)
         room.eventGameStarted.describe(gameStartedHandler)
@@ -160,28 +177,20 @@ export default function Svc (socket, io) {
         socket.leave(getNamespace(roomId, socket.username))
       })
     },
+    // Переназначение роли пользователя между "игрок" и "зритель"
     become ({ roomId, username, becomeWatcher }) {
       const room = getRoom(roomId)
       if (!room || room.isRunning) { return }
-      // Переназначаем роль пользователя
-      if (becomeWatcher) {
-        room.makeUserWatcher(username)
-      } else {
-        room.makeUserPlayer(username)
-      }
+      becomeWatcher ? room.makeWatcher(username) : room.makePlayer(username)
     },
     startOrResumeGame ({ roomId, ownerKey }) {
       const room = getRoom(roomId)
       if (!room) { return }
-      if (room.isRunning) {
-        room.resume(ownerKey)
-      } else {
-        room.startGame(ownerKey)
-      }
+      if (room.isRunning) { room.resume(ownerKey) } else { room.startGame(ownerKey) }
     },
     pauseGame ({ roomId, ownerKey }) {
       const room = getRoom(roomId)
-      if (!room) { return }
+      if (!room || !room.isRunning) { return }
       room.pause(ownerKey)
     },
     stopGame ({ roomId, ownerKey }) {
