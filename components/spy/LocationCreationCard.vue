@@ -6,25 +6,30 @@
       Изменить настройки локации
     </button>
     <div v-show="isOpened" class="checkout">
-      <div>
-        Тайтл
+      <div class="info">
+        <div>
+          Тайтл
+        </div>
+        <input type="text" maxlength="32" :value="title" @input="UPDATE_TITLE({locationId: id, title: $event.target.value})">
+        <div>
+          Картинка
+        </div>
+        <input type="url" maxlength="512" :value="img" @input="UPDATE_IMAGE({locationId: id, image: $event.target.value})">
+        <LocationCard :location="{title, img}" />
       </div>
-      <input type="text" maxlength="32" :value="title" @input="UPDATE_TITLE({locationId: id, title: $event.target.value})">
-      <div>
-        Картинка
+      <div class="roles">
+        <div>
+          Роли
+        </div>
+        <input
+          v-for="(role, i) in roles"
+          :key="i"
+          type="text"
+          maxlength="32"
+          :value="role"
+          @input="UPDATE_ROLE({locationId: id, index: i, role: $event.target.value})"
+        >
       </div>
-      <input type="url" maxlength="512" :value="img" @input="UPDATE_IMAGE({locationId: id, image: $event.target.value})">
-      <div>
-        Роли
-      </div>
-      <input
-        v-for="(role, i) in roles"
-        :key="i"
-        type="text"
-        maxlength="32"
-        :value="role"
-        @input="UPDATE_ROLE({locationId: id, index: i, role: $event.target.value})"
-      >
     </div>
     <button @click="DELETE_LOCATION({ locationId: id })">
       Удалить локацию
@@ -34,7 +39,9 @@
 
 <script>
 import { mapMutations } from 'vuex'
+import LocationCard from '@/components/spy/LocationCard'
 export default {
+  components: { LocationCard },
   props: {
     id: { type: Number, default: () => -1 },
     title: { type: String, default: () => '' },
@@ -55,8 +62,14 @@ export default {
 
 <style scoped>
 .checkout{
-  width: 200px;
+  width: fit-content;
   height: fit-content;
   background-color: lightgray;
+  display: flex;
+}
+
+.roles, .info{
+  display: flex;
+  flex-direction: column;
 }
 </style>

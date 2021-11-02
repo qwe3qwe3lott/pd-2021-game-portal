@@ -12,7 +12,7 @@
           :value="option.value"
           :min="option.min"
           :max="option.max"
-          @input="UPDATE_ROOM_OPTION({ optionKey: option.key, value: Number($event.target.value) })"
+          @input="UPDATE_ROOM_OPTION({ optionKey: option.key, value: +$event.target.value })"
         >
       </label>
     </div>
