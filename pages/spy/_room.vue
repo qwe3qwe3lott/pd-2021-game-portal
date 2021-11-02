@@ -78,7 +78,9 @@
     <br>
     <div class="temp-container">
       <b>Локации</b>
-      <LocationCard v-for="(loc, index) in locations" :key="index" :location="loc" :spy="gameIsRunning && !gameIsOnPause && !gameIsOnBrief && (player ? player.isSpy : false)" @pinpoint="pinpointLocation" />
+      <div class="locations-container">
+        <LocationCard v-for="(loc, index) in locations" :key="index" :location="loc" :spy="gameIsRunning && !gameIsOnPause && !gameIsOnBrief && (player ? player.isSpy : false)" @pinpoint="pinpointLocation" />
+      </div>
     </div>
     <br>
     <nuxt-link :to="'/'">
@@ -243,6 +245,10 @@ export default {
 .temp-container {
   padding: 5px;
   outline: #1400ff 1px solid;
-  width: fit-content;
+  max-width: fit-content;
+}
+.locations-container {
+  display: flex;
+  flex-wrap: wrap;
 }
 </style>
