@@ -90,7 +90,7 @@ export default function Svc (socket, io) {
       const userRenamedHandler = room.eventUserRenamed.subscribe((sender, payload) => {
         if (socket.tempUserKey !== payload.tempUserKey) { return }
         socket.username = payload.username
-        socket.emit('rename', toData(payload.username))
+        emit('rename', toData(payload.username))
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got new username')
       })
       const gameStartedHandler = room.eventGameStarted.subscribe((sender, payload) => {
