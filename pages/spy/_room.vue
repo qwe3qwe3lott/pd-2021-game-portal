@@ -183,6 +183,12 @@ export default {
         becomeWatcher
       })
     },
+    renameUser () {
+      this.ioApi.renameUser({
+        roomId: this.roomId,
+        username: this.username
+      })
+    },
     startOrResumeGame () {
       if (!this.ownerKey) { return }
       this.ioApi.startOrResumeGame({

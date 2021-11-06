@@ -30,6 +30,7 @@ const API = {
   methods: {
     joinRoom: { msg: { roomId: '', username: '' } },
     become: { msg: { roomId: '', username: '', becomeWatcher: '' } },
+    renameUser: { msg: { roomId: '', username: '' } },
     startOrResumeGame: { msg: { roomId: '', ownerKey: '' } },
     pauseGame: { msg: { roomId: '', ownerKey: '' } },
     stopGame: { msg: { roomId: '', ownerKey: '' } },
@@ -187,6 +188,12 @@ export default function Svc (socket, io) {
       const room = getRoom(roomId)
       if (!room) { return }
       if (room.isRunning) { room.resume(ownerKey) } else { room.startGame(ownerKey) }
+    },
+    renameUser ({ roomId, username }) {
+      const room = getRoom(roomId)
+      alert(username)
+      console.log('222222222222222222', username)
+      room.updateUser(username)
     },
     pauseGame ({ roomId, ownerKey }) {
       const room = getRoom(roomId)
