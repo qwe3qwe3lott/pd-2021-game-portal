@@ -1,10 +1,9 @@
 export const state = () => ({
-  username: null
+  username: null,
+  anyGameIsRunningFlag: false
 })
 
-export const getters = {
-  getUsername: state => state.username
-}
 export const mutations = {
-  SET_USERNAME: (state, username) => { state.username = username }
+  SET_USERNAME: (state, username) => { state.username = username },
+  SET_ANY_GAME_IS_RUNNING_FLAG: (state, flag) => { state.anyGameIsRunningFlag = flag }
 }

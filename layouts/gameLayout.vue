@@ -1,41 +1,42 @@
 <template>
-  <div>
-    <div v-if="!username">
-      <h1>Введите ваш ник</h1>
-      <form @submit.prevent="submitUsername">
-        <input v-model.trim="usernameField" type="text" minlength="1" maxlength="30">
-        <input type="submit">
-      </form>
-    </div>
-    <Nuxt v-else />
+  <div class="wrapper">
+    <Nuxt v-if="username" class="main" />
+    <UsernameManager class="footer" />
   </div>
 </template>
 
 <script>
+import { mapState } from 'vuex'
+import UsernameManager from '@/components/UsernameManager'
 export default {
   name: 'GameLayout',
-  data () {
-    return {
-      usernameField: ''
-    }
-  },
+  components: { UsernameManager },
   computed: {
-    username: {
-      get () { return this.$store.getters.getUsername },
-      set (username) { this.$store.commit('SET_USERNAME', username) }
-    }
-  },
-  mounted () {
-    // this.username = new Date().getMilliseconds().toString()
-  },
-  methods: {
-    submitUsername () {
-      this.$store.commit('SET_USERNAME', this.usernameField)
-    }
+    ...mapState(['username'])
   }
 }
 </script>
 
 <style scoped>
+
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1 1 auto;
+}
+
+.footer {
+  max-height: 40px;
+  color: white;
+  background-color: #423f6a;
+  padding: 10px;
+  font-size: 20px;
+  display: flex;
+  justify-content: center;
+}
 
 </style>

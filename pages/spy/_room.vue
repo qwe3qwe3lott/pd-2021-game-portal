@@ -138,8 +138,12 @@ export default {
     watchers () { return this.users.filter(user => user.isWatcher) },
     playersFromUsers () { return this.users.filter(user => !user.isWatcher) },
     username: {
-      get () { return this.$store.getters.getUsername },
-      set (username) { this.$store.commit('SET_USERNAME', username) }
+      get () { return this.$store.state.username },
+      set (value) { this.$store.commit('SET_USERNAME', value) }
+    },
+    anyGameIsRunningFlag: {
+      get () { return this.$store.state.anyGameIsRunningFlag },
+      set (value) { this.$store.commit('SET_ANY_GAME_IS_RUNNING_FLAG', value) }
     },
     ...mapState('spy', ['roomOptions'])
   },
@@ -152,7 +156,11 @@ export default {
     'ioData.rename' (username) { this.username = username; consolaGlobalInstance.log('rename', username) },
     'ioData.locations' (locations) { this.locations = locations; consolaGlobalInstance.log('locations', locations) },
     'ioData.ownerKey' (ownerKey) { this.ownerKey = ownerKey; consolaGlobalInstance.log('ownerKey', ownerKey) },
-    'ioData.gameRunningFlag' (gameRunningFlag) { this.gameIsRunning = gameRunningFlag; consolaGlobalInstance.log('gameIsRunning', gameRunningFlag) },
+    'ioData.gameRunningFlag' (gameRunningFlag) {
+      this.gameIsRunning = gameRunningFlag
+      consolaGlobalInstance.log('gameIsRunning', gameRunningFlag)
+      this.anyGameIsRunningFlag = gameRunningFlag
+    },
     'ioData.gamePauseFlag' (gamePauseFlag) { this.gameIsOnPause = gamePauseFlag; consolaGlobalInstance.log('gameIsOnPause', gamePauseFlag) },
     'ioData.gameBriefFlag' (gameBriefFlag) { this.gameIsOnBrief = gameBriefFlag; consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag) },
     'ioData.gameVotingFlag' (gameVotingFlag) { this.gameIsOnVoting = gameVotingFlag; consolaGlobalInstance.log('gameIsOnVoting', gameVotingFlag) },
@@ -173,6 +181,11 @@ export default {
       serverAPI: true
     })
     consolaGlobalInstance.log(this.socket)
+    // TODO: Сделать изменение состояния на сервере
+    this.usernameHandler = this.$store.subscribe((mutation) => {
+      if (mutation.type !== 'SET_USERNAME') { return }
+      consolaGlobalInstance.log()
+    })
   },
   methods: {
     joinRoom () {
@@ -247,6 +260,10 @@ export default {
         voteFlag,
         roundId: this.roundId
       })
+    },
+    destroyed () {
+      this.anyGameIsRunningFlag = false
+      this.usernameHandler()
     },
     setNewRoomOptions () {
       if (this.gameIsRunning) { return }
