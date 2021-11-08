@@ -1,18 +1,9 @@
 export const state = () => ({
-  username: null
+  username: null,
+  anyGameIsRunningFlag: false
 })
 
-export const getters = {
-  getUsername: (state) => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('username') || state.username
-    }
-    return state.username
-  }
-}
 export const mutations = {
-  SET_USERNAME: (state, username) => {
-    state.username = username
-    localStorage.setItem('username', username)
-  }
+  SET_USERNAME: (state, username) => { state.username = username },
+  SET_ANY_GAME_IS_RUNNING_FLAG: (state, flag) => { state.anyGameIsRunningFlag = flag }
 }

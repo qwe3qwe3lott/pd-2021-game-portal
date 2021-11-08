@@ -132,8 +132,12 @@ export default {
     watchers () { return this.users.filter(user => user.isWatcher) },
     playersFromUsers () { return this.users.filter(user => !user.isWatcher) },
     username: {
-      get () { return this.$store.getters.getUsername },
-      set (username) { this.$store.commit('SET_USERNAME', username) }
+      get () { return this.$store.state.username },
+      set (value) { this.$store.commit('SET_USERNAME', value) }
+    },
+    anyGameIsRunningFlag: {
+      get () { return this.$store.state.anyGameIsRunningFlag },
+      set (value) { this.$store.commit('SET_ANY_GAME_IS_RUNNING_FLAG', value) }
     }
   },
   watch: {
@@ -145,7 +149,11 @@ export default {
     'ioData.rename' (username) { this.username = username; consolaGlobalInstance.log('rename', username) },
     'ioData.locations' (locations) { this.locations = locations; consolaGlobalInstance.log('locations', locations) },
     'ioData.ownerKey' (ownerKey) { this.ownerKey = ownerKey; consolaGlobalInstance.log('ownerKey', ownerKey) },
-    'ioData.gameRunningFlag' (gameRunningFlag) { this.gameIsRunning = gameRunningFlag; consolaGlobalInstance.log('gameIsRunning', gameRunningFlag) },
+    'ioData.gameRunningFlag' (gameRunningFlag) {
+      this.gameIsRunning = gameRunningFlag
+      consolaGlobalInstance.log('gameIsRunning', gameRunningFlag)
+      this.anyGameIsRunningFlag = gameRunningFlag
+    },
     'ioData.gamePauseFlag' (gamePauseFlag) { this.gameIsOnPause = gamePauseFlag; consolaGlobalInstance.log('gameIsOnPause', gamePauseFlag) },
     'ioData.gameBriefFlag' (gameBriefFlag) { this.gameIsOnBrief = gameBriefFlag; consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag) },
     'ioData.gameVotingFlag' (gameVotingFlag) { this.gameIsOnVoting = gameVotingFlag; consolaGlobalInstance.log('gameIsOnVoting', gameVotingFlag) },
@@ -159,13 +167,18 @@ export default {
     'ioData.voting' (voting) { this.voting = voting; consolaGlobalInstance.log('voting', voting) },
     'ioData.winners' (winners) { this.winners = winners; consolaGlobalInstance.log('winners', winners) }
   },
-  mounted () {
+  created () {
     this.socket = this.$nuxtSocket({
       name: 'spy',
       channel: '/spy',
       serverAPI: true
     })
     consolaGlobalInstance.log(this.socket)
+    // TODO: Сделать изменение состояния на сервере
+    this.usernameHandler = this.$store.subscribe((mutation) => {
+      if (mutation.type !== 'SET_USERNAME') { return }
+      consolaGlobalInstance.log()
+    })
   },
   methods: {
     joinRoom () {
@@ -181,12 +194,6 @@ export default {
         roomId: this.roomId,
         username: this.username,
         becomeWatcher
-      })
-    },
-    renameUser () {
-      this.ioApi.renameUser({
-        roomId: this.roomId,
-        username: this.username
       })
     },
     startOrResumeGame () {
@@ -242,6 +249,10 @@ export default {
         voteFlag,
         roundId: this.roundId
       })
+    },
+    destroyed () {
+      this.anyGameIsRunningFlag = false
+      this.usernameHandler()
     }
   }
 }

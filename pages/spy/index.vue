@@ -92,7 +92,7 @@ export default {
         }
       }
       const originOptions = {
-        owner: this.$store.getters.getUsername,
+        owner: this.$store.state.username,
         locations: this.locations.filter(location => location.requires).map(location => ({
           title: location.title,
           img: location.img,

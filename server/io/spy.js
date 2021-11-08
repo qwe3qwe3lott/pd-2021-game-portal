@@ -30,7 +30,7 @@ const API = {
   methods: {
     joinRoom: { msg: { roomId: '', username: '' } },
     become: { msg: { roomId: '', username: '', becomeWatcher: '' } },
-    renameUser: { msg: { roomId: '', username: '' } },
+    renameUser: { msg: { roomId: '', username: '', newUsername: '' } },
     startOrResumeGame: { msg: { roomId: '', ownerKey: '' } },
     pauseGame: { msg: { roomId: '', ownerKey: '' } },
     stopGame: { msg: { roomId: '', ownerKey: '' } },
@@ -91,7 +91,7 @@ export default function Svc (socket, io) {
       const userRenamedHandler = room.eventUserRenamed.subscribe((sender, payload) => {
         if (socket.tempUserKey !== payload.tempUserKey) { return }
         socket.username = payload.username
-        emit('rename', toData(payload.username))
+        socket.emit('rename', toData(payload.username))
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got new username')
       })
       const gameStartedHandler = room.eventGameStarted.subscribe((sender, payload) => {
