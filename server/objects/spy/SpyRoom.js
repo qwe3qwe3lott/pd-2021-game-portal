@@ -4,7 +4,8 @@ module.exports = class SpyRoom {
   static #ADDITIONAL_USERNAME_CHAR = ')'
   static #OWNER_KEY_LENGTH = 6
   static #SPY_KEY_LENGTH = 6
-  static #MIN_PLAYERS_COUNT = 3
+  // На время тестов изменено с 3 на 1
+  static #MIN_PLAYERS_COUNT = 1
   static #MAX_SECONDS_ON_PAUSE = 60 * 60
 
   #users; get users () { return this.#users }
@@ -47,19 +48,7 @@ module.exports = class SpyRoom {
     this.#isOnBrief = false
     this.#isOnVoting = false
     this.#isOnSpyChance = false
-    this.#options = {
-      spiesCount: options.spiesCount ?? 1,
-      spyWinPoints: options.spyWinPoints ?? 4,
-      spyTimeoutPoints: options.spyTimeoutPoints ?? 2,
-      playerWinPoints: options.playerWinPoints ?? 1,
-      playerBonusPoints: options.playerBonusPoints ?? 2,
-      playerTimeoutPoints: options.playerTimeoutPoints ?? 0,
-      winScore: options.winScore ?? 10,
-      roundTime: options.roundTime ?? 60,
-      votingTime: options.votingTime ?? 60,
-      briefTime: options.briefTime ?? 5,
-      spyChanceTime: options.spiesCount ?? 10
-    }
+    this.setOptions(options)
     this.#locations = locations ?? [{
       title: 'void',
       url: null,
@@ -67,7 +56,7 @@ module.exports = class SpyRoom {
     }]
     this.#state = {
       roundId: 0,
-      lastStartMoment: null,
+      lastStartMoment: Date.now(),
       location: {},
       players: [],
       roundTime: 0,
@@ -81,6 +70,7 @@ module.exports = class SpyRoom {
       }
     }
 
+    // TODO: избавиться от ссылок перед удалением комнаты
     this.#eventUserJoined = new MyEvent(this)
     this.#eventUsersChanged = new MyEvent(this)
     this.#eventUserRenamed = new MyEvent(this)
@@ -98,6 +88,22 @@ module.exports = class SpyRoom {
 
     this.#resolve = null
     this.#intervalId = null
+  }
+
+  setOptions (options) {
+    this.#options = {
+      spiesCount: options.spiesCount ?? 1,
+      spyWinPoints: options.spyWinPoints ?? 4,
+      spyTimeoutPoints: options.spyTimeoutPoints ?? 2,
+      playerWinPoints: options.playerWinPoints ?? 1,
+      playerBonusPoints: options.playerBonusPoints ?? 2,
+      playerTimeoutPoints: options.playerTimeoutPoints ?? 0,
+      winScore: options.winScore ?? 10,
+      roundTime: options.roundTime ?? 60,
+      votingTime: options.votingTime ?? 60,
+      briefTime: options.briefTime ?? 5,
+      spyChanceTime: options.spiesCount ?? 10
+    }
   }
 
   // Добавление пользователя в массив пользователей с последующим вызовом событий для оповещения пользователей в комнате
@@ -173,10 +179,9 @@ module.exports = class SpyRoom {
 
   async startGame (ownerKey) {
     if (ownerKey !== this.#ownerKey || this.#isRunning) { return }
-    // На время тестов изменено
-    // if (this.#playersCount() < SpyRoom.#MIN_PLAYERS_COUNT) { return }
-    if (this.#playersCount() < 1) { return }
+    if (this.#playersCount() < SpyRoom.#MIN_PLAYERS_COUNT) { return }
     this.#isRunning = true
+    this.#isOnPause = this.#isOnVoting = this.#isOnBrief = this.#isOnSpyChance = false
     this.#state.lastStartMoment = Date.now()
     // Все игроки из массива пользователей вносятся в список игроков в состояние игры
     // Это позволяет сохранять информацию об игроке, даже если он отключился во время игры
@@ -251,7 +256,7 @@ module.exports = class SpyRoom {
           })
           // Если против игрока проголосовали все другие игроки
           if (res.toCondemn) {
-            // Проверяем был ли обвиняемых шпионом
+            // Проверяем был ли обвиняемый шпионом
             const spyLose = this.#state.players.find(player => player.username === this.#state.voting.defendantUsername).isSpy
             // По результату голосования начисляем очки игрокам
             if (spyLose) {
@@ -387,4 +392,11 @@ module.exports = class SpyRoom {
   }
 
   #playersCount = () => this.#users.filter(user => !user.isWatcher).length
+
+  isShouldBeDestroyed = () => this.#users.length !== 0 && this.#state.lastStartMoment - Date.now() > 86400000
+
+  setNewOptions ({ ownerKey, options }) {
+    if (ownerKey !== this.#ownerKey || this.#isRunning) { return }
+    this.setOptions(options)
+  }
 }

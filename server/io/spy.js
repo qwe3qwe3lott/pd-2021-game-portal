@@ -2,7 +2,7 @@ import { resolve as pResolve } from 'path'
 import consolaGlobalInstance from 'consola'
 const api = require('../axios/api')
 const Room = require('../models/room.js')
-const SpyRoom = require('../objects/spy/Room')
+const SpyRoom = require('../objects/spy/SpyRoom')
 const { default: Data } = require(pResolve('./server/db'))
 const Util = require('../objects/Util')
 
@@ -35,7 +35,8 @@ const API = {
     stopGame: { msg: { roomId: '', ownerKey: '' } },
     pinpointLocation: { msg: { roomId: '', spyKey: '', username: '', location: '', roundId: '' } },
     startVotingAgainstPlayer: { mgs: { roomId: '', username: '', defendantUsername: '', roundId: '' } },
-    voteAgainstPlayer: { mgs: { roomId: '', username: '', defendantUsername: '', voteFlag: '', roundId: '' } }
+    voteAgainstPlayer: { mgs: { roomId: '', username: '', defendantUsername: '', voteFlag: '', roundId: '' } },
+    setNewRoomOptions: { mgs: { roomId: '', ownerKey: '', options: '' } }
   }
 }
 
@@ -201,31 +202,22 @@ export default function Svc (socket, io) {
     pinpointLocation ({ roomId, spyKey, username, location, roundId }) {
       const room = getRoom(roomId)
       if (!room || !room.isRunning) { return }
-      room.pinpointLocation({
-        spyKey,
-        username,
-        location,
-        roundId
-      })
+      room.pinpointLocation({ spyKey, username, location, roundId })
     },
     startVotingAgainstPlayer ({ roomId, username, defendantUsername, roundId }) {
       const room = getRoom(roomId)
       if (!room || !room.isRunning) { return }
-      room.startVotingAgainstPlayer({
-        accuserUsername: username,
-        defendantUsername,
-        roundId
-      })
+      room.startVotingAgainstPlayer({ accuserUsername: username, defendantUsername, roundId })
     },
     voteAgainstPlayer ({ roomId, username, defendantUsername, voteFlag, roundId }) {
       const room = getRoom(roomId)
       if (!room || !room.isRunning) { return }
-      room.voteAgainstPlayer({
-        username,
-        defendantUsername,
-        voteFlag,
-        roundId
-      })
+      room.voteAgainstPlayer({ username, defendantUsername, voteFlag, roundId })
+    },
+    setNewRoomOptions ({ roomId, ownerKey, options }) {
+      const room = getRoom(roomId)
+      if (!room || room.isRunning) { return }
+      room.setNewOptions({ ownerKey, options })
     }
   })
 }

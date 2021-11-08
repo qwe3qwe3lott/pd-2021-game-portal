@@ -43,6 +43,10 @@
       <button :disabled="!gameIsRunning" @click="stopGame">
         Закончить игру
       </button>
+      <form v-if="!gameIsRunning" @submit.prevent="setNewRoomOptions()">
+        <OptionsCard />
+        <input type="submit" value="Обновить правила">
+      </form>
     </div>
     <br>
     <!-- Основной таймер -->
@@ -91,12 +95,14 @@
 
 <script>
 import consolaGlobalInstance from 'consola'
+import { mapState } from 'vuex'
 import LocationCard from '@/components/spy/LocationCard'
 import PlayerCard from '@/components/spy/PlayerCard'
 import Timer from '@/components/timer/Timer'
+import OptionsCard from '@/components/spy/OptionsCard'
 // TODO: Сделать указание на локацию после раунда и на указанную шпионом локаицю
 export default {
-  components: { LocationCard, PlayerCard, Timer },
+  components: { LocationCard, PlayerCard, Timer, OptionsCard },
   layout: 'gameLayout',
   async validate (ctx) {
     const res = await ctx.$back.getters.checkRoom(ctx.route.params.room)
@@ -134,7 +140,8 @@ export default {
     username: {
       get () { return this.$store.getters.getUsername },
       set (username) { this.$store.commit('SET_USERNAME', username) }
-    }
+    },
+    ...mapState('spy', ['roomOptions'])
   },
   watch: {
     'ioApi.ready' () {
@@ -177,6 +184,7 @@ export default {
     // TODO: На клиенте расширить проверки состояния комнаты перед отправкой запросов
     become (becomeWatcher) {
       if (this.gameIsRunning || this.myUser.isWatcher === becomeWatcher) { return }
+      consolaGlobalInstance.log('become')
       this.ioApi.become({
         roomId: this.roomId,
         username: this.username,
@@ -185,6 +193,7 @@ export default {
     },
     startOrResumeGame () {
       if (!this.ownerKey) { return }
+      consolaGlobalInstance.log('startOrResumeGame')
       this.ioApi.startOrResumeGame({
         roomId: this.roomId,
         ownerKey: this.ownerKey
@@ -192,6 +201,7 @@ export default {
     },
     pauseGame () {
       if (!this.gameIsRunning || !this.ownerKey) { return }
+      consolaGlobalInstance.log('pauseGame')
       this.ioApi.pauseGame({
         roomId: this.roomId,
         ownerKey: this.ownerKey
@@ -199,6 +209,7 @@ export default {
     },
     stopGame () {
       if (!this.gameIsRunning || !this.ownerKey) { return }
+      consolaGlobalInstance.log('stopGame')
       this.ioApi.stopGame({
         roomId: this.roomId,
         ownerKey: this.ownerKey
@@ -235,6 +246,19 @@ export default {
         defendantUsername: this.voting.defendantUsername,
         voteFlag,
         roundId: this.roundId
+      })
+    },
+    setNewRoomOptions () {
+      if (this.gameIsRunning) { return }
+      const newOptions = {}
+      for (const option of this.roomOptions) {
+        newOptions[option.key] = option.value
+      }
+      consolaGlobalInstance.log('setNewRoomOptions')
+      this.ioApi.setNewRoomOptions({
+        roomId: this.roomId,
+        ownerKey: this.ownerKey,
+        options: newOptions
       })
     }
   }

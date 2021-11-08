@@ -8,7 +8,7 @@
       <input type="submit" value="Создать комнату">
       {{ errorMessage }}
       <br>
-      <OptionsCreationCard />
+      <OptionsCard />
     </form>
     <br>
     <LocationCreationCard
@@ -38,11 +38,11 @@
 import { mapGetters, mapMutations, mapState } from 'vuex'
 import FileSaver from 'file-saver'
 import LocationCreationCard from '@/components/spy/LocationCreationCard'
-import OptionsCreationCard from '@/components/spy/OptionsCreationCard'
+import OptionsCard from '@/components/spy/OptionsCard'
 export default {
   components: {
     LocationCreationCard,
-    OptionsCreationCard
+    OptionsCard
   },
   layout: 'gameLayout',
   data () {

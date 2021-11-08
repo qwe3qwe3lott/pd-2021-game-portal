@@ -23,11 +23,9 @@
 import { mapMutations, mapState } from 'vuex'
 export default {
   name: 'OptionsCreationCard',
-  data () {
-    return {
-      isOpened: false
-    }
-  },
+  data: () => ({
+    isOpened: false
+  }),
   computed: {
     ...mapState('spy', ['roomOptions'])
   },

@@ -14,16 +14,12 @@ module.exports = class MyEvent {
 
   describe (listener) {
     const listenerId = this.#listeners.findIndex(item => item === listener)
-    if (listenerId !== -1) {
-      this.#listeners.splice(listenerId, 1)
-    }
+    if (listenerId !== -1) { this.#listeners.splice(listenerId, 1) }
   }
 
   notify (payload) {
     for (const listener of this.#listeners) {
-      if (listener !== null) {
-        listener(this.#sender, payload)
-      }
+      if (typeof listener === 'function') { listener(this.#sender, payload) }
     }
   }
 }
