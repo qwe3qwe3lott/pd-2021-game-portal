@@ -1,7 +1,6 @@
 import { resolve as pResolve } from 'path'
 import consolaGlobalInstance from 'consola'
 const api = require('../axios/api')
-const Room = require('../models/room.js')
 const SpyRoom = require('../objects/spy/SpyRoom')
 const { default: Data } = require(pResolve('./server/db'))
 const Util = require('../objects/Util')
@@ -53,7 +52,8 @@ export default function Svc (socket, io) {
       socket.username = username
       let room = getRoom(roomId)
       // Если комната есть в БД, но нет в ОЗУ
-      if (!room && await Room.findOne({ _id: roomId }) !== null) {
+      const roomShouldExists = await api.getters.checkRoom(roomId)
+      if (!room && roomShouldExists) {
         const res = await api.getters.getRoomOriginOptions(roomId)
         const originOptions = JSON.parse(res.data.options)
         room = new SpyRoom(roomId, originOptions.owner, originOptions.options, originOptions.locations)

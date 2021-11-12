@@ -2,6 +2,7 @@ const consolaGlobalInstance = require('consola')
 const Room = require('../models/room.js')
 
 module.exports.checkRoom = async function (req, res) {
+  consolaGlobalInstance.log('BACKEND: ', 'checking room')
   const roomId = req.query.roomId
   try {
     const room = await Room.findOne({ _id: roomId })

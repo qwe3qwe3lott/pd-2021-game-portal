@@ -144,7 +144,7 @@ export default {
   display: flex;
   font-family: 'Press Start 2P', cursive;}
 .game-wrapper{
-  background-color: rgb(0,0,0,0.6);
+  background-color: rgba(0,0,0,0.6);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -153,7 +153,7 @@ export default {
 .filter-input{
   border-radius: 15px;
   width: 35%;
-  color: rgba(228, 71, 21);
+  color: rgb(228, 71, 21);
   font-size: 22pt;
   margin-bottom: 0.5%;
   box-shadow: 0 5px 5px rgba(0,0,0,0.5);

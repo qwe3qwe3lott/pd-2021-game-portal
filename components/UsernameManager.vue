@@ -1,14 +1,16 @@
 <template>
-  <div class="main-container" v-if="!anyGameIsRunningFlag">
-    <div class="input-block" v-if="!editMode">
-      <p class="header__input">Ваш ник: {{ username }}</p>
-      <button class="input-form__button" @click="editMode = true">
-        <img src="../assets/svg/Edit_icon_(the_Noun_Project_30184).svg" width="20" alt="Изменить">
-      </button>
+  <div v-if="!anyGameIsRunningFlag" class="main-container">
+    <div v-if="!editMode" class="input-block">
+      <p class="header__input">
+        Ваш ник: {{ username }}
+      </p>
+      <button class="input-form__button" @click="editMode = true" />
     </div>
-    <form class="input-block" v-else @submit.prevent="submitUsername">
-      <p class="header__input">Введите ваш ник: </p>
-      <input class="input-form__input-field" v-model.trim="usernameField" type="text" minlength="1" maxlength="30">
+    <form v-else class="input-block" @submit.prevent="submitUsername">
+      <p class="header__input">
+        Введите ваш ник:
+      </p>
+      <input v-model.trim="usernameField" class="input-form__input-field" type="text" minlength="1" maxlength="30">
       <input class="input-form__button" type="submit" value="Сохранить">
     </form>
   </div>
@@ -63,7 +65,7 @@ export default {
   align-items: center;
   justify-content: center;
   justify-self: center;
-  gap: 4%;
+  gap: 1em;
   margin: 0 auto;
   font-family: 'Press Start 2P', cursive;
 }
@@ -83,17 +85,15 @@ export default {
   font-family: 'Press Start 2P', cursive;
 }
 .input-form__button{
-  width: max-content;
-  padding: 2.5%;
+  width: 2em;
+  height: 2em;
+  padding: 0.1em;
   border: none;
-  border-radius: 15px;
+  border-radius: 0.5em;
+  background: url("../assets/svg/Edit_icon_(the_Noun_Project_30184).svg");
   background-color: #E54917;
+  background-size: cover;
   color: white;
   cursor: pointer;
-  font-size: 12pt;
-  display: flex;
-  align-items: center;
-  gap: 2%;
-  font-family: 'Press Start 2P', cursive;
 }
 </style>
