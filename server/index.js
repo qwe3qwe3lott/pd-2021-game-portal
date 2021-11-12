@@ -1,4 +1,4 @@
-const consola = require('consola')
+const consolaGlobalInstance = require('consola')
 const express = require('express')
 const { Nuxt, Builder } = require('nuxt')
 const config = require('../nuxt.config.js')
@@ -20,7 +20,7 @@ async function start (uri, callback) {
   }
   const nuxt = new Nuxt(config)
   await nuxt.listen()
-  consola.log('nuxt server listening', nuxt.server.options.server)
+  consolaGlobalInstance.log('nuxt server listening', nuxt.server.options.server)
 
   app.use(nuxt.render)
 
@@ -30,7 +30,7 @@ async function start (uri, callback) {
   } else {
     await nuxt.ready()
   }
-  consola.log('Nuxt app ready!')
+  consolaGlobalInstance.log('Nuxt app ready!')
 }
 
 app.use(express.json())
