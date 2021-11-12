@@ -54,7 +54,7 @@ export default {
   margin: 0.2em;
 }
 .title{
-  font-size: 2em;
+  font-size: 1.2em;
   width: 100%;
   text-align: center;
   overflow: hidden;

@@ -1,16 +1,16 @@
 <template>
   <div class="wrapper">
     <Nuxt v-if="username" class="main" />
-    <UsernameManager class="footer" />
+    <Footer />
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
-import UsernameManager from '@/components/UsernameManager'
+import Footer from '@/components/Footer'
 export default {
   name: 'GameLayout',
-  components: { UsernameManager },
+  components: { Footer },
   computed: {
     ...mapState(['username'])
   }
@@ -28,15 +28,4 @@ export default {
 .main {
   flex: 1 1 auto;
 }
-
-.footer {
-  max-height: 40px;
-  color: white;
-  background-color: #423f6a;
-  padding: 10px;
-  font-size: 20px;
-  display: flex;
-  justify-content: center;
-}
-
 </style>
