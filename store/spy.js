@@ -60,6 +60,9 @@ export const mutations = {
   },
   REPLACE_LOCATIONS: (state, locations) => {
     locations.forEach((location, index) => {
+      if (location.roles.length !== 10) {
+        location.roles = ['', '', '', '', '', '', '', '', '', '']
+      }
       location.id = index
       location.requires = true
     })
@@ -83,5 +86,15 @@ export const mutations = {
   },
   DELETE_LOCATION: (state, payload) => {
     state.locations = state.locations.filter(location => location.id !== payload.locationId)
+  },
+  ACTIVATE_LOCATIONS: (state) => {
+    state.locations.forEach((location) => {
+      location.requires = true
+    })
+  },
+  DEACTIVATE_LOCATIONS: (state) => {
+    state.locations.forEach((location) => {
+      location.requires = false
+    })
   }
 }
