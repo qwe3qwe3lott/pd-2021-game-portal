@@ -139,7 +139,7 @@ export default {
 
 <style scoped>
 .game-body{
-  background: url("assets/svg/background_1.webp") no-repeat center top fixed #FFFFFF;
+  background: url("../../assets/svg/spy/background.webp") no-repeat center top fixed #FFFFFF;
   background-size: cover;
   display: flex;
   font-family: 'Press Start 2P', cursive;}
