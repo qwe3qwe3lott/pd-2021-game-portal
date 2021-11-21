@@ -152,6 +152,15 @@ export default function Svc (socket, io) {
         emit(socket, 'player', payload)
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Player spent vote')
       })
+      const spyChanceStartedHandler = room.eventSpyChanceStarted.subscribe((sender, payload) => {
+        socket.emit('gameSpyChanceFlag', toData(true))
+        emit(socket, 'additionalTimerTime', payload)
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': SpyChance started')
+      })
+      const spyChanceOveredHandler = room.eventSpyChanceOvered.subscribe((sender, payload) => {
+        socket.emit('gameSpyChanceFlag', toData(false))
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': SpyChance overed')
+      })
       // Добавляем пользователя в комнату
       // В комнату может войти пользователь с уже задействавонным в комнате ником
       // Поэтому создаём временный ключ для идетнификации сокета пользователя, которого возможно нужно будет переименновать
@@ -175,6 +184,8 @@ export default function Svc (socket, io) {
         room.eventVotingStarted.describe(votingStartedHandler)
         room.eventVotingOvered.describe(votingOveredHandler)
         room.eventPlayerSpentVote.describe(playerSpentVoteHandler)
+        room.eventSpyChanceStarted.describe(spyChanceStartedHandler)
+        room.eventSpyChanceOvered.describe(spyChanceOveredHandler)
         socket.leave(getNamespace(roomId, socket.username))
       })
     },

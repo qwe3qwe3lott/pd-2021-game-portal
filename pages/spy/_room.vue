@@ -53,10 +53,11 @@
     <Timer :time="timerTime" :is-on-pause="gameIsOnPause || gameIsOnVoting" />
     <br>
     <!-- Таймер для голосования -->
-    <div v-show="gameIsOnVoting">
+    <div v-show="gameIsOnVoting || gameIsOnSpyChance">
       <Timer :time="additionalTimerTime" :is-on-pause="gameIsOnPause" />
-      <b>{{ voting.defendantUsername }} обвиняется в шпионаже</b>
-      <div v-show="iAmPlayer && ![voting.defendantUsername, voting.accuserUsername].includes(username)">
+      <b v-show="!gameIsOnSpyChance">{{ voting.defendantUsername }} обвиняется в шпионаже</b>
+      <b v-show="gameIsOnSpyChance">Шпион угадывает локацию</b>
+      <div v-show="!gameIsOnSpyChance && iAmPlayer && ![voting.defendantUsername, voting.accuserUsername].includes(username)">
         <button @click="voteAgainstPlayer(true)">
           Согласиться
         </button>
@@ -83,7 +84,7 @@
     <div class="temp-container">
       <b>Локации</b>
       <div class="locations-container">
-        <LocationCard v-for="(loc, index) in locations" :key="index" :location="loc" :spy="gameIsRunning && !gameIsOnPause && !gameIsOnBrief && (player ? player.isSpy : false)" @pinpoint="pinpointLocation" />
+        <LocationCard v-for="(loc, index) in locations" :key="index" :location="loc" :spy="gameIsRunning && !gameIsOnPause && !gameIsOnBrief && (!gameIsOnVoting || gameIsOnSpyChance) && (player ? player.isSpy : false)" @pinpoint="pinpointLocation" />
       </div>
     </div>
     <br>
@@ -229,7 +230,7 @@ export default {
       })
     },
     pinpointLocation (location) {
-      if (!this.gameIsRunning || !this.player || !this.player.spyKey) { return }
+      if (!this.gameIsRunning || this.gameIsOnPause || this.gameIsOnBrief || (this.gameIsOnVoting && !this.gameIsOnSpyChance) || !this.player || !this.player.spyKey) { return }
       consolaGlobalInstance.log('pinpointLocation')
       this.ioApi.pinpointLocation({
         roomId: this.roomId,

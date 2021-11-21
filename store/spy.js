@@ -26,6 +26,7 @@ export const state = () => ({
   roomOptions: [
     { key: 'spiesCount', value: 1, min: 1, max: 100, description: 'Количество шпионов' },
     { key: 'spyWinPoints', value: 4, min: 0, max: 100, description: 'Количество очков, начисляемых шпиону за победу' },
+    { key: 'spyChanceWinPoints', value: 2, min: 0, max: 100, description: 'Количество очков, начисляемых шпиону за победу после раскрытия' },
     { key: 'spyTimeoutPoints', value: 1, min: 0, max: 100, description: 'Количество очков, начисляемых шпиону за тайм-аут' },
     { key: 'playerWinPoints', value: 1, min: 0, max: 100, description: 'Количество очков, начисляемых не шпиону за победу' },
     { key: 'playerBonusPoints', value: 1, min: 0, max: 100, description: 'Количество очков, начисляемых не шпиону за победу после инициирования голосования' },
@@ -34,7 +35,7 @@ export const state = () => ({
     { key: 'roundTime', value: 600, min: 5, max: 1000, description: 'Количество секунд раунда' },
     { key: 'votingTime', value: 20, min: 5, max: 60, description: 'Количество секунд голосования' },
     { key: 'briefTime', value: 7, min: 5, max: 60, description: 'Количество секунд перерыва' },
-    { key: 'spyChanceTime', value: 10, min: 5, max: 60, description: 'Количество секунд для шпиона после раскрытия' }
+    { key: 'spyChanceTime', value: 20, min: 0, max: 60, description: 'Количество секунд для шпиона после раскрытия (не даётся если меньше 5 сек.)' }
   ]
 })
 
