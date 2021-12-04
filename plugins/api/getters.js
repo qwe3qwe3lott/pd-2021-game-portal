@@ -4,6 +4,7 @@ export default function (instance) {
     checkUser: (
       login,
       password
-    ) => instance.get(`/users/check/${login}/${password}`)
+    ) => instance.get(`/users/check/${login}/${password}`),
+    getAllStatistics: () => instance.get('/statistics/all')
   }
 }
