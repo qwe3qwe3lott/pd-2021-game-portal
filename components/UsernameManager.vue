@@ -42,13 +42,14 @@ export default {
     if (typeof window !== 'undefined') {
       const username = localStorage.getItem(this.localStorageKey)
       if (username) {
-        this.username = this.usernameField = username
+        this.usernameField = username
+        this.username = { username: this.usernameField, isServerRename: false }
       } else { this.editMode = true }
     } else { this.editMode = true }
   },
   methods: {
     submitUsername () {
-      this.username = this.usernameField
+      this.username = { username: this.usernameField, isServerRename: false }
       localStorage.setItem(this.localStorageKey, this.usernameField)
       this.editMode = false
     }
