@@ -435,6 +435,7 @@ module.exports = class SpyRoom {
     }
     const oldUser = this.#users.find(user => user.username === oldUsername)
     oldUser.username = newUsername
+    if (oldUser.isOwner) { this.#owner = newUsername }
     this.#eventUserRenamed.notify({ tempUserKey, username: newUsername })
     this.#eventUsersChanged.notify({ users: this.#users })
   }
