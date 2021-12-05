@@ -35,7 +35,8 @@ const API = {
     pinpointLocation: { msg: { roomId: '', spyKey: '', username: '', location: '', roundId: '' } },
     startVotingAgainstPlayer: { mgs: { roomId: '', username: '', defendantUsername: '', roundId: '' } },
     voteAgainstPlayer: { mgs: { roomId: '', username: '', defendantUsername: '', voteFlag: '', roundId: '' } },
-    setNewRoomOptions: { mgs: { roomId: '', ownerKey: '', options: '' } }
+    setNewRoomOptions: { mgs: { roomId: '', ownerKey: '', options: '' } },
+    changeUsername: { msg: { roomId: '', oldUsername: '', newUsername: '' } }
   }
 }
 
@@ -49,6 +50,7 @@ export default function Svc (socket, io) {
   return Object.freeze({
     getAPI () { return API },
     async joinRoom ({ roomId, username }) {
+      // TODO: userId
       socket.username = username
       let room = getRoom(roomId)
       // Если комната есть в БД, но нет в ОЗУ
@@ -61,8 +63,7 @@ export default function Svc (socket, io) {
       }
       // Подписываемся на события комнаты
       const userJoinedHandler = room.eventUserJoined.subscribe((sender, payload) => {
-        // Удаление временного ключа для возможности переименнования пользователя при заходе в комнату
-        delete socket.tempUserKey
+        if (payload.username !== socket.username) { return }
         emit(socket, 'locations', payload)
         emit(socket, 'gameRunningFlag', payload)
         payload.ownerKey && emit(socket, 'ownerKey', payload)
@@ -90,7 +91,11 @@ export default function Svc (socket, io) {
       })
       const userRenamedHandler = room.eventUserRenamed.subscribe((sender, payload) => {
         if (socket.tempUserKey !== payload.tempUserKey) { return }
+        // Удаление временного ключа для возможности переименнования пользователя при заходе в комнату
+        delete socket.tempUserKey
+        consolaGlobalInstance.log(socket.username)
         socket.username = payload.username
+        consolaGlobalInstance.log(socket.username)
         socket.emit('rename', toData(payload.username))
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': Got new username')
       })
@@ -169,6 +174,8 @@ export default function Svc (socket, io) {
       room.addUser(username, socket.tempUserKey)
       // Подписываем пользователя на событие отключения
       socket.once('disconnect', () => {
+        consolaGlobalInstance.log(getNamespace(roomId, socket.username), ': User disconnected')
+        consolaGlobalInstance.log(socket.username)
         room.removeUser(socket.username)
         room.eventUserJoined.describe(userJoinedHandler)
         room.eventUsersChanged.describe(usersChangedHandler)
@@ -229,6 +236,13 @@ export default function Svc (socket, io) {
       const room = getRoom(roomId)
       if (!room || room.isRunning) { return }
       room.setNewOptions({ ownerKey, options })
+    },
+    changeUsername ({ roomId, oldUsername, newUsername }) {
+      if (oldUsername === newUsername) { return }
+      const room = getRoom(roomId)
+      if (!room || room.isRunning) { return }
+      socket.tempUserKey = Util.generateRandomString(6)
+      room.changeUsername(oldUsername, newUsername, socket.tempUserKey)
     }
   })
 }

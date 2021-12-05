@@ -146,15 +146,19 @@ export default {
       get () { return this.$store.state.anyGameIsRunningFlag },
       set (value) { this.$store.commit('SET_ANY_GAME_IS_RUNNING_FLAG', value) }
     },
-    ...mapState('spy', ['roomOptions'])
+    ...mapState('spy', ['roomOptions']),
+    ...mapState(['oldUsername'])
   },
   watch: {
     'ioApi.ready' () {
-      if (!this.username) { return }
+      if (!this.username) {
+        this.$router.push({ path: '/' })
+        return
+      }
       this.joinRoom()
     },
     'ioData.users' (users) { this.users = users; consolaGlobalInstance.log('users', users) },
-    'ioData.rename' (username) { this.username = username; consolaGlobalInstance.log('rename', username) },
+    'ioData.rename' (username) { this.username = { username, isServerRename: true }; consolaGlobalInstance.log('rename', username) },
     'ioData.locations' (locations) { this.locations = locations; consolaGlobalInstance.log('locations', locations) },
     'ioData.ownerKey' (ownerKey) { this.ownerKey = ownerKey; consolaGlobalInstance.log('ownerKey', ownerKey) },
     'ioData.gameRunningFlag' (gameRunningFlag) {
@@ -182,18 +186,19 @@ export default {
       serverAPI: true
     })
     consolaGlobalInstance.log(this.socket)
-    // TODO: Сделать изменение состояния на сервере
     this.usernameHandler = this.$store.subscribe((mutation) => {
       if (mutation.type !== 'SET_USERNAME') { return }
-      consolaGlobalInstance.log()
+      if (mutation.payload.isServerRename) { return }
+      this.changeUsername()
     })
+  },
+  destroyed () {
+    this.anyGameIsRunningFlag = false
+    this.usernameHandler()
   },
   methods: {
     joinRoom () {
-      this.ioApi.joinRoom({
-        roomId: this.roomId,
-        username: this.username
-      })
+      this.ioApi.joinRoom({ roomId: this.roomId, username: this.username })
     },
     // TODO: На клиенте расширить проверки состояния комнаты перед отправкой запросов
     become (becomeWatcher) {
@@ -262,10 +267,6 @@ export default {
         roundId: this.roundId
       })
     },
-    destroyed () {
-      this.anyGameIsRunningFlag = false
-      this.usernameHandler()
-    },
     setNewRoomOptions () {
       if (this.gameIsRunning) { return }
       const newOptions = {}
@@ -277,6 +278,14 @@ export default {
         roomId: this.roomId,
         ownerKey: this.ownerKey,
         options: newOptions
+      })
+    },
+    changeUsername () {
+      if (this.gameIsRunning || this.username === this.oldUsername) { return }
+      this.ioApi.changeUsername({
+        roomId: this.roomId,
+        oldUsername: this.oldUsername,
+        newUsername: this.username
       })
     }
   }

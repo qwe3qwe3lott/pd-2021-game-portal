@@ -1,4 +1,3 @@
-const consolaGlobalInstance = require('consola')
 const MyEvent = require('../MyEvent')
 const Util = require('../Util')
 module.exports = class SpyRoom {
@@ -131,7 +130,8 @@ module.exports = class SpyRoom {
     // Формирование пакета данных зашедшему в комнату пользователю в зависимости от состояния игры
     const payload = {
       locations: this.#locations,
-      gameRunningFlag: this.#isRunning
+      gameRunningFlag: this.#isRunning,
+      username
     }
     if (isOwner) { payload.ownerKey = this.#ownerKey }
     if (this.#isRunning) {
@@ -425,5 +425,17 @@ module.exports = class SpyRoom {
   setNewOptions ({ ownerKey, options }) {
     if (ownerKey !== this.#ownerKey || this.#isRunning) { return }
     this.setOptions(options)
+  }
+
+  changeUsername (oldUsername, newUsername, tempUserKey) {
+    if (this.#users.some(user => user.username === newUsername && user.username !== oldUsername)) {
+      while (this.#users.some(user => user.username === newUsername && user.username !== oldUsername)) {
+        newUsername += SpyRoom.#ADDITIONAL_USERNAME_CHAR
+      }
+    }
+    const oldUser = this.#users.find(user => user.username === oldUsername)
+    oldUser.username = newUsername
+    this.#eventUserRenamed.notify({ tempUserKey, username: newUsername })
+    this.#eventUsersChanged.notify({ users: this.#users })
   }
 }
