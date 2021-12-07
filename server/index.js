@@ -1,5 +1,6 @@
 const consolaGlobalInstance = require('consola')
 const express = require('express')
+const cors = require('cors')
 const { Nuxt, Builder } = require('nuxt')
 const config = require('../nuxt.config.js')
 require('dotenv').config()
@@ -10,6 +11,8 @@ const UserRouter = require('./routes/user')
 const StatisticsRouter = require('./routes/statistics')
 
 const app = express()
+
+app.use(cors())
 
 config.dev = process.env.NODE_ENV !== 'production'
 

@@ -151,6 +151,7 @@ export default {
   },
   watch: {
     'ioApi.ready' () {
+      consolaGlobalInstance.log('ioApi.ready')
       if (!this.username) {
         this.$router.push({ path: '/' })
         return
@@ -198,6 +199,7 @@ export default {
   },
   methods: {
     joinRoom () {
+      consolaGlobalInstance.log('joinRoom')
       this.ioApi.joinRoom({ roomId: this.roomId, username: this.username })
     },
     // TODO: На клиенте расширить проверки состояния комнаты перед отправкой запросов

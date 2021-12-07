@@ -336,7 +336,7 @@ module.exports = class SpyRoom {
     this.#eventGameOvered.notify({ winners: this.#getWinnersUsernames() })
   }
 
-  #playersAccusedSpy () {
+  #playersAccusedSpy = () => {
     this.#state.players.filter(player => player.username !== this.#state.voting.defendantUsername)
       .forEach((player) => { player.score += player.username === this.#state.voting.accuserUsername ? this.#options.playerWinPoints + this.#options.playerBonusPoints : this.#options.playerWinPoints })
   }
