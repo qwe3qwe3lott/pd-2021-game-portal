@@ -44,7 +44,14 @@
         Закончить игру
       </button>
       <form v-if="!gameIsRunning" @submit.prevent="setNewRoomOptions()">
-        <OptionsCard />
+        <modal-window v-if="showOptionsCard" :title="'Расширенные настройки'" @close="showOptionsCard = false">
+          <template #content>
+            <OptionsCard />
+          </template>
+        </modal-window>
+        <button @click="showOptionsCard = true">
+          Расширенные настройки
+        </button>
         <input type="submit" value="Обновить правила">
       </form>
     </div>
@@ -129,7 +136,8 @@ export default {
       timerTime: { originTime: 0, currentTime: 0 },
       additionalTimerTime: { originTime: 0, currentTime: 0 },
       ioApi: {},
-      ioData: {}
+      ioData: {},
+      showOptionsCard: false
     }
   },
   computed: {

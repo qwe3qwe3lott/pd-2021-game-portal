@@ -4,8 +4,15 @@
       <nuxt-link class="button back-button" :to="'/'">
         Назад
       </nuxt-link>
-      <OptionsCard />
       <form class="start-handler" @submit.prevent="createRoom">
+        <modal-window v-if="showOptionsCard" :title="'Расширенные настройки'" @close="showOptionsCard = false">
+          <template #content>
+            <OptionsCard />
+          </template>
+        </modal-window>
+        <button type="button" @click="showOptionsCard = true">
+          Расширенные настройки
+        </button>
         <input class="start-button" type="submit" value="Создать комнату">
         <p class="error">
           {{ errorMessage }}
@@ -59,7 +66,8 @@ export default {
     return {
       errorMessage: '',
       locationsRequiredAtLess: 3,
-      filterText: ''
+      filterText: '',
+      showOptionsCard: false
     }
   },
   computed: {

@@ -91,7 +91,7 @@ export default {
   padding: 0.1em;
   border: none;
   border-radius: 0.5em;
-  background: url("../assets/svg/Edit_icon_(the_Noun_Project_30184).svg");
+  background: url("../assets/svg/edit-icon.svg");
   background-color: #E54917;
   background-size: cover;
   color: white;

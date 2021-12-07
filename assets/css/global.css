@@ -1,16 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
-
 *, *::after, *::before {
   padding: 0;
   margin: 0;
   box-sizing: content-box;
 }
-
+button, input[type=button], input[type=submit] {
+  border: none;
+  background: transparent;
+  font-size: inherit;
+  color: inherit;
+}
+button:hover, input[type=button]:hover, input[type=submit]:hover {
+  cursor: pointer;
+}
 html, body {
   height: 100%;
   width: 100%;
 }
-
-body{
+html {
+  font-size: 20px;
+}
+body {
   background-color: #c5482d;
 }
