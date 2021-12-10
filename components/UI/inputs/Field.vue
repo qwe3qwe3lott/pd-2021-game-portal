@@ -28,6 +28,5 @@ export default {
 .input {
   border-radius: 1.5em;
   padding: 0.2em;
-  color: var(--input-text-color);
 }
 </style>

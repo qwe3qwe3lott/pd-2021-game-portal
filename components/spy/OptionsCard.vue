@@ -3,6 +3,7 @@
     <label v-for="(option, index) in roomOptions" :key="index">
       {{ option.description }}
       <input
+        class="input"
         type="number"
         :value="option.value"
         :min="option.min"
@@ -37,8 +38,5 @@ export default {
   background-color: rgba(0,0,0,0.55);
   border-radius: 15px;
   padding: 1%;
-}
-.options input{
-  border-radius: 5px;
 }
 </style>

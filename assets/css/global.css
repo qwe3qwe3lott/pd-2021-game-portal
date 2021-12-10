@@ -15,7 +15,7 @@ input[type=text], input[type=url], input[type=number] {
   border: none;
   background: var(--input-background-color);
   font-size: 1em;
-  color: inherit;
+  color: var(--input-text-color);
 }
 button:hover, input[type=button]:hover, input[type=submit]:hover {
   cursor: pointer;
