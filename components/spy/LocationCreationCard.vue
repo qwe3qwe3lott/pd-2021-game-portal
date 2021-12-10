@@ -9,32 +9,32 @@
     </div>
     <div v-show="isOpened" class="body">
       <div class="info">
-        <!-- TODO: Вынести поле с инпутом в UI компонент -->
-        <label>
-          Название
-          <input type="text" maxlength="32" :value="title" @input="UPDATE_TITLE({locationId: id, title: $event.target.value})">
-        </label>
-        <br>
-        <label>
-          URL картинки
-          <input type="url" maxlength="512" :value="img" @input="UPDATE_IMAGE({locationId: id, image: $event.target.value})">
-        </label>
+        <Field
+          class="text-field"
+          :label="'Название'"
+          :type="'text'"
+          :max-length="32"
+          :value="title"
+          @input="UPDATE_TITLE({locationId: id, title: $event.target.value})"
+        />
+        <Field
+          class="text-field"
+          :label="'URL картинки'"
+          :type="'url'"
+          :max-length="512"
+          :value="img"
+          @input="UPDATE_IMAGE({locationId: id, image: $event.target.value})"
+        />
         <LocationCard :location="{title, img}" />
       </div>
-      <div class="roles">
-        <div>
-          Роли
-        </div>
-        <input
-          v-for="(role, i) in roles"
-          :key="i"
-          style="display: block"
-          type="text"
-          maxlength="32"
-          :value="role"
-          @input="UPDATE_ROLE({locationId: id, index: i, role: $event.target.value})"
-        >
-      </div>
+      <FieldSet
+        class="roles"
+        :label="'Роли'"
+        :max-length="32"
+        :type="'text'"
+        :values="roles"
+        @input="UPDATE_ROLE({locationId: id, index: i, role: $event.target.value})"
+      />
     </div>
   </div>
 </template>
@@ -43,8 +43,10 @@
 import { mapMutations } from 'vuex'
 import LocationCard from '@/components/spy/LocationCard'
 import Switcher from '@/components/UI/inputs/Switcher'
+import Field from '@/components/UI/inputs/Field'
+import FieldSet from '@/components/UI/inputs/FieldSet'
 export default {
-  components: { LocationCard, Switcher },
+  components: { LocationCard, Switcher, Field, FieldSet },
   props: {
     id: { type: Number, default: () => -1 },
     title: { type: String, default: () => '' },
@@ -65,12 +67,12 @@ export default {
 
 <style scoped>
 .card {
+  color: white;
   background: var(--primary-color);
   border-radius: 1em;
   padding: 0.5em;
-  max-width: 50em;
-  min-width: 25em;
-  width: fit-content;
+  max-width: 30em;
+  width: 100%;
   margin: 0.3em 0;
 }
 .header {
@@ -84,22 +86,25 @@ export default {
   width: max-content;
   height: fit-content;
   display: flex;
-  justify-content: center;
   background-color: var(--modal-background-color);
   border-radius: 0.5em;
   padding: 0.3em;
-}
-.body input{
-  border-radius: 15px;
-  font-family: inherit;
-  font-size: 8pt;
+  gap: 1em;
 }
 .title-button {
   width: 100%;
+  height: 1.5em;
+  line-height: 1.5em;
+  white-space: nowrap;
 }
-.delete-button{
+.delete-button {
   width: 1.5em;
   height: 1.5em;
-  background: url("./assets/svg/trash-icon.svg");
+  background-color: white;
+  mask: url("./assets/svg/trash-icon.svg");
+}
+.info {
+  display: grid;
+  gap: 0.5em;
 }
 </style>

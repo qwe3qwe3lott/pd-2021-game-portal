@@ -1,5 +1,7 @@
 :root {
   --primary-color: #E54817;
   --primary-color-primary-text: white;
+  --input-background-color: white;
+  --input-text-color: black;
   --modal-background-color: rgba(0, 0, 0, 0.5);
 }

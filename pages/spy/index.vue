@@ -27,25 +27,31 @@
         placeholder="Название локации для поиска"
         type="text"
       >
-      <LocationCreationCard
-        v-for="(location, index) in filteredLocations"
-        :id="location.id"
-        :key="index"
-        :title="location.title"
-        :img="location.img"
-        :roles="location.roles"
-        :requires="location.requires"
-      />
+      <div class="cards">
+        <LocationCreationCard
+          v-for="(location, index) in filteredLocations"
+          :id="location.id"
+          :key="index"
+          :title="location.title"
+          :img="location.img"
+          :roles="location.roles"
+          :requires="location.requires"
+        />
+      </div>
       <button class="button" @click="ADD_LOCATION">
         Добавить локацию
       </button>
-      <div class="export-list-location">
-        <button class="button" @click="exportJSON">
-          Экспорт списка локаций
+      <div class="file-block">
+        <h2 class="file-title">
+          Список локаций
+        </h2>
+        <label class="file-button">
+          Импорт
+          <input style="display: none" type="file" accept=".json" @change="importJSON">
+        </label>
+        <button class="file-button" @click="exportJSON">
+          Экспорт
         </button>
-      </div>
-      <div class="import-list-location">
-        <input class="button" type="file" accept=".json" @change="importJSON">
       </div>
     </div>
   </div>
@@ -150,7 +156,7 @@ export default {
   background: url("../../assets/svg/spy/background.webp") no-repeat center top fixed #FFFFFF;
   background-size: cover;
   display: flex;
-  font-family: 'Press Start 2P', cursive;}
+}
 .game-wrapper{
   background-color: rgba(0,0,0,0.6);
   display: flex;
@@ -167,12 +173,12 @@ export default {
   box-shadow: 0 5px 5px rgba(0,0,0,0.5);
   padding: 0.5%;
 }
-.locationCounter{
+.locationCounter {
   font-size: 14pt;
   padding: 1%;
   color: white;
 }
-.start-button{
+.start-button {
   margin-top: 2%;
   width: max-content;
   padding: 2%;
@@ -184,10 +190,9 @@ export default {
   font-size: 12pt;
   display: flex;
   align-items: center;
-  font-family: 'Press Start 2P', cursive;
   box-shadow: 0 5px 5px rgba(0,0,0,0.5);
 }
-.start-handler{
+.start-handler {
   text-align: center;
   width: 50%;
   display: flex;
@@ -197,10 +202,10 @@ export default {
   color: white;
 
 }
-.back-button{
+.back-button {
   align-self: flex-start;
 }
-.button{
+.button {
   text-decoration: none;
   color: white;
   width: max-content;
@@ -210,10 +215,33 @@ export default {
   background-color: #E54917;
   cursor: pointer;
   font-size: 12pt;
-  font-family: 'Press Start 2P', cursive;
   margin: 1%;
 }
-.error{
+.file-block {
+  background-color: var(--primary-color);
+  padding: 0.6em;
+  border-radius: 1.5em;
+  color: var(--primary-color-primary-text);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5em;
+}
+.cards {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: fit-content;
+  margin: 0 1em;
+}
+.file-title {
+  text-align: center;
+  grid-column: 1/3;
+}
+.file-button {
+  font-size: 1em;
+  cursor: pointer;
+}
+.error {
   text-shadow: 3px 0 3px red;
 }
 </style>
