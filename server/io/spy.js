@@ -15,6 +15,7 @@ const API = {
     gameRunningFlag: { data: undefined },
     gamePauseFlag: { data: undefined },
     gameBriefFlag: { data: undefined },
+    locationsTitles: { data: undefined },
     gameVotingFlag: { data: undefined },
     gameSpyChanceFlag: { data: undefined },
     roundId: { data: undefined },
@@ -166,6 +167,10 @@ export default function Svc (socket, io) {
         socket.emit('gameSpyChanceFlag', toData(false))
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': SpyChance overed')
       })
+      const locationWasNamedHandler = room.eventLocationWasNamed.subscribe((sender, payload) => {
+        socket.emit('locationsTitles', toData(payload))
+        consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': location was named')
+      })
       // Добавляем пользователя в комнату
       // В комнату может войти пользователь с уже задействавонным в комнате ником
       // Поэтому создаём временный ключ для идетнификации сокета пользователя, которого возможно нужно будет переименновать
@@ -193,6 +198,7 @@ export default function Svc (socket, io) {
         room.eventPlayerSpentVote.describe(playerSpentVoteHandler)
         room.eventSpyChanceStarted.describe(spyChanceStartedHandler)
         room.eventSpyChanceOvered.describe(spyChanceOveredHandler)
+        room.eventLocationWasNamed.describe(locationWasNamedHandler)
         socket.leave(getNamespace(roomId, socket.username))
       })
     },

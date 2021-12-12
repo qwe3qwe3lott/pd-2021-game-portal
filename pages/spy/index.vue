@@ -27,6 +27,12 @@
         placeholder="Название локации для поиска"
         type="text"
       >
+      <button class="button" @click="ACTIVATE_LOCATIONS">
+        Выбрать все локации
+      </button>
+      <button class="button" @click="DEACTIVATE_LOCATIONS">
+        Выключить все локации
+      </button>
       <div class="cards">
         <LocationCreationCard
           v-for="(location, index) in filteredLocations"
@@ -52,6 +58,9 @@
         <button class="file-button" @click="exportJSON">
           Экспорт
         </button>
+        <p class="error">
+          {{ importErrorMessage }}
+        </p>
       </div>
     </div>
   </div>
@@ -73,7 +82,8 @@ export default {
       errorMessage: '',
       locationsRequiredAtLess: 3,
       filterText: '',
-      showOptionsCard: false
+      showOptionsCard: false,
+      importErrorMessage: ''
     }
   },
   computed: {
@@ -94,20 +104,35 @@ export default {
     }
   },
   methods: {
-    ...mapMutations('spy', ['REPLACE_LOCATIONS', 'ADD_LOCATION']),
+    ...mapMutations('spy', ['REPLACE_LOCATIONS', 'ADD_LOCATION', 'ACTIVATE_LOCATIONS', 'DEACTIVATE_LOCATIONS']),
     exportJSON () {
       const data = JSON.stringify(this.getLocationsForExportToJSON)
       const blob = new Blob([data], { type: '' })
       FileSaver.saveAs(blob, 'LocationsList.json')
     },
     async importJSON (event) {
-      // TODO: Более хорошая проверка файла и его содержимого
-      if (!event.target.files[0]) { return }
+      this.importErrorMessage = ''
+      if (!event.target.files[0]) {
+        return
+      }
       const file = event.target.files[0]
       const dataFromFile = await new Response(file).text()
-      let locations = JSON.parse(dataFromFile)
-      locations = locations.filter(location => location.title && location.roles)
-      this.REPLACE_LOCATIONS(locations)
+      try {
+        const locations = JSON.parse(dataFromFile).filter(location => typeof location.title === 'string' && typeof location.img === 'string')
+
+        locations.forEach((location) => {
+          location.roles.forEach((role, index) => {
+            console.log(role)
+            if (typeof role !== 'string') {
+              location.roles[index] = ''
+            }
+          })
+        })
+
+        this.REPLACE_LOCATIONS(locations)
+      } catch (e) {
+        this.importErrorMessage = 'Ошибка при считывании данных JSON файла'
+      }
     },
     async createRoom () {
       this.errorMessage = ''
