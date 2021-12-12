@@ -33,7 +33,7 @@
         :max-length="32"
         :type="'text'"
         :values="roles"
-        @input="UPDATE_ROLE({locationId: id, index: i, role: $event.target.value})"
+        @input="UPDATE_ROLE({locationId: id, index: $event.fieldIndex, role: $event.target.value})"
       />
     </div>
   </div>

@@ -56,13 +56,13 @@ export const mutations = {
   },
   ADD_LOCATION: (state) => {
     if (state.locations.length < 100) {
-      state.locations.push({ id: state.counter++, title: '', img: '', roles: Array(5).fill(''), requires: true })
+      state.locations.push({ id: state.counter++, title: '', img: '', roles: Array(10).fill(''), requires: true })
     }
   },
   REPLACE_LOCATIONS: (state, locations) => {
     locations.forEach((location, index) => {
       if (location.roles.length !== 10) {
-        location.roles = ['', '', '', '', '', '', '', '', '', '']
+        location.roles = Array(10).fill('')
       }
       location.id = index
       location.requires = true

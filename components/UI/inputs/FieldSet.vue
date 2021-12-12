@@ -10,7 +10,7 @@
       :type="type"
       :maxlength="maxLength"
       :value="value"
-      @input="$emit('input', $event)"
+      @input="$emit('input', (() => { $event.fieldIndex = i; return $event }).call())"
     >
   </fieldset>
 </template>

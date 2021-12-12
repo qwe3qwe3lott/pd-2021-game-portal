@@ -69,6 +69,7 @@
 <script>
 import { mapGetters, mapMutations, mapState } from 'vuex'
 import FileSaver from 'file-saver'
+import consolaGlobalInstance from 'consola'
 import LocationCreationCard from '@/components/spy/LocationCreationCard'
 import OptionsCard from '@/components/spy/OptionsCard'
 export default {
@@ -149,6 +150,7 @@ export default {
           return
         }
         if (location.roles.filter(role => role.trim() !== '').length === 0) {
+          consolaGlobalInstance.log(location)
           this.errorMessage = `Укажите хотя бы одну роль на выбранной локацие - ${location.title}`
           return
         }
