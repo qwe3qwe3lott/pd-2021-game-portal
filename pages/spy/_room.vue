@@ -167,7 +167,15 @@ export default {
       this.anyGameIsRunningFlag = gameRunningFlag
     },
     'ioData.gamePauseFlag' (gamePauseFlag) { this.gameIsOnPause = gamePauseFlag; consolaGlobalInstance.log('gameIsOnPause', gamePauseFlag) },
-    'ioData.gameBriefFlag' (gameBriefFlag) { this.gameIsOnBrief = gameBriefFlag; consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag) },
+    'ioData.gameBriefFlag' (gameBriefFlag) {
+      this.gameIsOnBrief = gameBriefFlag; consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag)
+      if (!this.gameIsOnBrief) {
+        this.clearLocationsFlags()
+      }
+    },
+    'ioData.locationsTitles' (payload) {
+      this.fullLocationsFlag(payload.spyLocation, payload.correctLocation)
+    },
     'ioData.gameVotingFlag' (gameVotingFlag) { this.gameIsOnVoting = gameVotingFlag; consolaGlobalInstance.log('gameIsOnVoting', gameVotingFlag) },
     'ioData.gameSpyChanceFlag' (gameSpyChanceFlag) { this.gameIsOnSpyChance = gameSpyChanceFlag; consolaGlobalInstance.log('gameIsOnSpyChance', gameSpyChanceFlag) },
     'ioData.roundId' (roundId) { this.roundId = roundId; consolaGlobalInstance.log('roundId', roundId) },
@@ -197,6 +205,7 @@ export default {
     this.usernameHandler()
   },
   methods: {
+
     joinRoom () {
       this.ioApi.joinRoom({ roomId: this.roomId, username: this.username })
     },
@@ -287,6 +296,22 @@ export default {
         oldUsername: this.oldUsername,
         newUsername: this.username
       })
+    },
+    clearLocationsFlags () {
+      this.locations.forEach((location) => {
+        delete location.wasCorrect
+        delete location.wasPinpointed
+      })
+    },
+    fullLocationsFlag (spyTitle, correctTitle) {
+      const spyLocation = this.locations.find(loc => loc.title === spyTitle)
+      const correctLocation = this.locations.find(loc => loc.title === correctTitle)
+      if (correctLocation) {
+        correctLocation.wasCorrect = true
+      }
+      if (spyLocation) {
+        spyLocation.wasPinpointed = true
+      }
     }
   }
 }

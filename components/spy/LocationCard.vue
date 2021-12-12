@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" :style="{'color': wasPinpointed && wasCorrect ? 'orange' : (wasCorrect ? 'green' : (wasPinpointed ? 'red' : 'white'))}">
     <div class="grid">
       <p class="title">
         {{ location.title }}
@@ -25,7 +25,9 @@ export default {
         }
       }
     },
-    spy: { type: Boolean, default: () => false }
+    spy: { type: Boolean, default: () => false },
+    wasCorrect: { type: Boolean, default: () => false },
+    wasPinpointed: { type: Boolean, default: () => false }
   },
   data: () => ({
     imgErrorSrc: require('@/assets/svg/error404.svg')

@@ -37,6 +37,7 @@ module.exports = class SpyRoom {
   #eventPlayerSpentVote; get eventPlayerSpentVote () { return this.#eventPlayerSpentVote }
   #eventSpyChanceStarted; get eventSpyChanceStarted () { return this.#eventSpyChanceStarted }
   #eventSpyChanceOvered; get eventSpyChanceOvered () { return this.#eventSpyChanceOvered }
+  #eventLocationWasNamed; get eventLocationWasNamed () { return this.#eventLocationWasNamed }
   #resolve
   #intervalId
   #accumTimeOnPause
@@ -90,6 +91,7 @@ module.exports = class SpyRoom {
     this.#eventPlayerSpentVote = new MyEvent(this)
     this.#eventSpyChanceStarted = new MyEvent(this)
     this.#eventSpyChanceOvered = new MyEvent(this)
+    this.#eventLocationWasNamed = new MyEvent(this)
     this.#resolve = null
     this.#intervalId = null
   }
@@ -363,6 +365,7 @@ module.exports = class SpyRoom {
         if (player !== spy) { player.score += this.#options.playerWinPoints }
       }
     }
+    this.#eventLocationWasNamed.notify({ correctLocation: this.#state.location.title, spyLocation: location.title })
     this.#resolveTimer({ locationWasNamed: true })
   }
 

@@ -8,7 +8,7 @@ export const state = () => ({
     { id: 4, title: 'Церковь', img: 'https://portal-games-pd.ru/spy/originLocations/church.webp', roles: ['Батюшка', 'Верующий', 'Поп', 'Ребёнок', 'Уборщик', 'Атеист', 'Иудей', 'Христианин', 'Католик', 'Буддист'], requires: true },
     { id: 5, title: 'Вокзал', img: 'https://portal-games-pd.ru/spy/originLocations/railwayStation.webp', roles: ['Уборщик', 'Охранник', 'Билетёр', 'Контроллёр', 'Машинист', 'Проводник', 'Пассажир', 'Кассир', 'Таможенник', 'Буфетчица'], requires: true },
     { id: 6, title: 'Продуктовый', img: 'https://portal-games-pd.ru/spy/originLocations/grocery.webp', roles: ['Уборщик', 'Охранник', 'Кассир', 'Администратор', 'Грузчик', 'Покупатель', 'Расфасовщик', 'Пенсионер', 'Безработный', 'Мерчендайзер'], requires: true },
-    { id: 7, title: 'Торговый центер', img: 'https://portal-games-pd.ru/spy/originLocations/shoppingСenter.webp', roles: ['Покупатель', 'Бизнесмен', 'Охранник', 'Безработный', 'Школьник', 'Студент', 'Многодетная мать', 'Кассир', 'Мороженщик', 'Консультант'], requires: true },
+    { id: 7, title: 'Торговый центр', img: 'https://portal-games-pd.ru/spy/originLocations/shoppingСenter.webp', roles: ['Покупатель', 'Бизнесмен', 'Охранник', 'Безработный', 'Школьник', 'Студент', 'Многодетная мать', 'Кассир', 'Мороженщик', 'Консультант'], requires: true },
     { id: 8, title: 'Зоопарк', img: 'https://portal-games-pd.ru/spy/originLocations/zoo.webp', roles: ['Уборщик', 'Охранник', 'Обезьяна', 'Слон', 'Ребенок', 'Кассир', 'Жираф', 'Пингвин', 'Посетитель', 'Директор'], requires: true },
     { id: 9, title: 'Каток', img: 'https://portal-games-pd.ru/spy/originLocations/iceRink.webp', roles: ['Кассир', 'Конькобежец', 'Посетитель', 'Фигурист', 'Тренер', 'Уборщик', 'Кёрлингист', 'Хоккеист', 'Болельщик', 'Ребенок'], requires: true },
     { id: 10, title: 'Метро', img: 'https://portal-games-pd.ru/spy/originLocations/subway.webp', roles: ['Дедушка', 'Бабушка', 'Ребенок', 'Машинист', 'Бездомный', 'Кассир', 'Читатель газеты', 'Патрульный', 'Проверяющий багаж', 'Пассажир'], requires: true },
@@ -98,4 +98,5 @@ export const mutations = {
       location.requires = false
     })
   }
+
 }
