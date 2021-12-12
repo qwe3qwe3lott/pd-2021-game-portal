@@ -91,7 +91,15 @@
     <div class="temp-container">
       <b>Локации</b>
       <div class="locations-container">
-        <LocationCard v-for="(loc, index) in locations" :key="index" :location="loc" :spy="gameIsRunning && !gameIsOnPause && !gameIsOnBrief && (!gameIsOnVoting || gameIsOnSpyChance) && (player ? player.isSpy : false)" @pinpoint="pinpointLocation" />
+        <LocationCard
+          v-for="(loc, index) in locations"
+          :key="index"
+          :was-correct="loc.wasCorrect"
+          :was-pinpointed="loc.wasPinpointed"
+          :location="loc"
+          :spy="gameIsRunning && !gameIsOnPause && !gameIsOnBrief && (!gameIsOnVoting || gameIsOnSpyChance) && (player ? player.isSpy : false)"
+          @pinpoint="pinpointLocation"
+        />
       </div>
     </div>
     <br>
@@ -108,7 +116,6 @@ import LocationCard from '@/components/spy/LocationCard'
 import PlayerCard from '@/components/spy/PlayerCard'
 import Timer from '@/components/timer/Timer'
 import OptionsCard from '@/components/spy/OptionsCard'
-// TODO: Сделать указание на локацию после раунда и на указанную шпионом локаицю
 export default {
   components: { LocationCard, PlayerCard, Timer, OptionsCard },
   layout: 'gameLayout',
@@ -178,9 +185,7 @@ export default {
     'ioData.gamePauseFlag' (gamePauseFlag) { this.gameIsOnPause = gamePauseFlag; consolaGlobalInstance.log('gameIsOnPause', gamePauseFlag) },
     'ioData.gameBriefFlag' (gameBriefFlag) {
       this.gameIsOnBrief = gameBriefFlag; consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag)
-      if (!this.gameIsOnBrief) {
-        this.clearLocationsFlags()
-      }
+      if (!this.gameIsOnBrief) { this.clearLocationsFlags() }
     },
     'ioData.locationsTitles' (payload) {
       consolaGlobalInstance.log('locationsTitles', payload)

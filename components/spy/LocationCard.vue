@@ -1,7 +1,7 @@
 <template>
-  <div class="container" :style="{'font-size': wasPinpointed ? '100px' : '25px'}">
+  <div class="container">
     <div class="grid">
-      <p class="title">
+      <p class="title" :style="{'color': wasPinpointed && wasCorrect ? 'orange' : (wasCorrect ? 'green' : (wasPinpointed ? 'red' : 'white'))}">
         {{ location.title }}
       </p>
       <button v-if="spy" class="pointer" @click="$emit('pinpoint', location)">

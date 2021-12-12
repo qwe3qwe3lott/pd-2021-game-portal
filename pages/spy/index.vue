@@ -13,7 +13,7 @@
         <button type="button" @click="showOptionsCard = true">
           Расширенные настройки
         </button>
-        <input class="start-button" type="submit" value="Создать комнату">
+        <input class="button" type="submit" value="Создать комнату">
         <p class="error">
           {{ errorMessage }}
         </p>
@@ -122,7 +122,6 @@ export default {
 
         locations.forEach((location) => {
           location.roles.forEach((role, index) => {
-            console.log(role)
             if (typeof role !== 'string') {
               location.roles[index] = ''
             }
@@ -190,32 +189,13 @@ export default {
   flex: 1 1 auto;
 }
 .filter-input{
-  border-radius: 15px;
-  width: 35%;
-  color: rgb(228, 71, 21);
-  font-size: 22pt;
-  margin-bottom: 0.5%;
-  box-shadow: 0 5px 5px rgba(0,0,0,0.5);
-  padding: 0.5%;
+  border-radius: 1em;
+  width: 20em;
+  padding: 0.5em;
 }
 .locationCounter {
-  font-size: 14pt;
-  padding: 1%;
+  margin: 0.5em 0;
   color: white;
-}
-.start-button {
-  margin-top: 2%;
-  width: max-content;
-  padding: 2%;
-  border: none;
-  border-radius: 15px;
-  background-color: #E54917;
-  color: white;
-  cursor: pointer;
-  font-size: 12pt;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 5px 5px rgba(0,0,0,0.5);
 }
 .start-handler {
   text-align: center;
@@ -231,16 +211,11 @@ export default {
   align-self: flex-start;
 }
 .button {
-  text-decoration: none;
-  color: white;
-  width: max-content;
-  padding: 1%;
-  border: none;
-  border-radius: 15px;
-  background-color: #E54917;
-  cursor: pointer;
-  font-size: 12pt;
-  margin: 1%;
+  padding: 0.5em;
+  background-color: var(--primary-color);
+  color: var(--primary-color-primary-text);
+  border-radius: 1em;
+  margin: 0.3em;
 }
 .file-block {
   background-color: var(--primary-color);

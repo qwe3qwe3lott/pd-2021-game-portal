@@ -70,7 +70,7 @@ export default {
   color: white;
   background: var(--primary-color);
   border-radius: 1em;
-  padding: 0.5em;
+  padding: 0 0.5em;
   max-width: 30em;
   width: 100%;
   margin: 0.3em 0;
@@ -93,15 +93,17 @@ export default {
 }
 .title-button {
   width: 100%;
-  height: 1.5em;
+  height: 2.2em;
   line-height: 1.5em;
   white-space: nowrap;
 }
 .delete-button {
-  width: 1.5em;
+  width: 2em;
   height: 1.5em;
   background-color: white;
   mask: url("./assets/svg/trash-icon.svg");
+  mask-repeat: no-repeat;
+  mask-size: cover;
 }
 .info {
   display: grid;
