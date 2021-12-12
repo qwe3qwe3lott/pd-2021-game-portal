@@ -1,5 +1,5 @@
 <template>
-  <div class="container" :style="{'color': wasPinpointed && wasCorrect ? 'orange' : (wasCorrect ? 'green' : (wasPinpointed ? 'red' : 'white'))}">
+  <div class="container" :style="{'font-size': wasPinpointed ? '100px' : '25px'}">
     <div class="grid">
       <p class="title">
         {{ location.title }}

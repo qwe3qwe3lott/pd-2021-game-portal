@@ -1,3 +1,4 @@
+
 const MyEvent = require('../MyEvent')
 const Util = require('../Util')
 module.exports = class SpyRoom {
@@ -365,6 +366,7 @@ module.exports = class SpyRoom {
         if (player !== spy) { player.score += this.#options.playerWinPoints }
       }
     }
+
     this.#eventLocationWasNamed.notify({ correctLocation: this.#state.location.title, spyLocation: location.title })
     this.#resolveTimer({ locationWasNamed: true })
   }

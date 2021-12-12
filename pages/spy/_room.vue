@@ -183,6 +183,7 @@ export default {
       }
     },
     'ioData.locationsTitles' (payload) {
+      consolaGlobalInstance.log('locationsTitles', payload)
       this.fullLocationsFlag(payload.spyLocation, payload.correctLocation)
     },
     'ioData.gameVotingFlag' (gameVotingFlag) { this.gameIsOnVoting = gameVotingFlag; consolaGlobalInstance.log('gameIsOnVoting', gameVotingFlag) },
@@ -314,13 +315,17 @@ export default {
       })
     },
     fullLocationsFlag (spyTitle, correctTitle) {
-      const spyLocation = this.locations.find(loc => loc.title === spyTitle)
-      const correctLocation = this.locations.find(loc => loc.title === correctTitle)
-      if (correctLocation) {
+      const spyLocationId = this.locations.findIndex(loc => loc.title === spyTitle)
+      const correctLocationId = this.locations.findIndex(loc => loc.title === correctTitle)
+      if (correctLocationId !== -1) {
+        const correctLocation = this.locations[correctLocationId]
         correctLocation.wasCorrect = true
+        this.locations[correctLocationId] = correctLocation
       }
-      if (spyLocation) {
+      if (spyLocationId !== -1) {
+        const spyLocation = this.locations[spyLocationId]
         spyLocation.wasPinpointed = true
+        this.locations[spyLocationId] = spyLocation
       }
     }
   }
