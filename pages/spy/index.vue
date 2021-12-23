@@ -22,7 +22,7 @@
         {{ requiredLocations.length }} из {{ locations.length }} локаций задействовано
       </p>
       <input
-        v-model="filterText"
+        v-model.trim="filterText"
         class="filter-input"
         placeholder="Название локации для поиска"
         type="text"
@@ -67,6 +67,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import { mapGetters, mapMutations, mapState } from 'vuex'
 import FileSaver from 'file-saver'
 import consolaGlobalInstance from 'consola'
@@ -84,28 +85,38 @@ export default {
       locationsRequiredAtLess: 3,
       filterText: '',
       showOptionsCard: false,
-      importErrorMessage: ''
+      importErrorMessage: '',
+      filteredLocations: []
     }
   },
   computed: {
     ...mapGetters('spy', ['getRequiredLocations', 'getLocationsForExportToJSON']),
     ...mapState('spy', ['roomOptions', 'locations']),
-    filteredLocations () {
+
+    requiredLocations () {
+      return this.locations.filter(elem => elem.requires)
+    }
+  },
+  watch: {
+    filterText: _.debounce(function () { this.filterLocations() }, 500)
+  },
+  mounted () {
+    this.filteredLocations = this.locations
+  },
+  methods: {
+    ...mapMutations('spy', ['REPLACE_LOCATIONS', 'ADD_LOCATION', 'ACTIVATE_LOCATIONS', 'DEACTIVATE_LOCATIONS']),
+
+    filterLocations () {
       const filterText = this.filterText
-      return this.locations.filter(function (elem) {
+      this.filteredLocations = this.locations.filter(function (elem) {
         if (filterText === '') {
           return true
         } else {
           return elem.title.toLowerCase().includes(filterText.toLowerCase())
         }
       })
+      consolaGlobalInstance.log('СТРАУСИНАЯ ЗАДНИЦА')
     },
-    requiredLocations () {
-      return this.locations.filter(elem => elem.requires)
-    }
-  },
-  methods: {
-    ...mapMutations('spy', ['REPLACE_LOCATIONS', 'ADD_LOCATION', 'ACTIVATE_LOCATIONS', 'DEACTIVATE_LOCATIONS']),
     exportJSON () {
       const data = JSON.stringify(this.getLocationsForExportToJSON)
       const blob = new Blob([data], { type: '' })
