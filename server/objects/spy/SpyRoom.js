@@ -1,6 +1,6 @@
-
 const MyEvent = require('../MyEvent')
-const Util = require('../Util')
+const generateRandomString = require('../../util/generateRandomString')
+const getRandomArrayIndex = require('../../util/getRandomArrayIndex')
 module.exports = class SpyRoom {
   static #ADDITIONAL_USERNAME_CHAR = ')'
   static #OWNER_KEY_LENGTH = 6
@@ -46,7 +46,7 @@ module.exports = class SpyRoom {
   constructor (id, owner, options, locations) {
     this.#id = id
     this.#owner = owner
-    this.#ownerKey = Util.generateRandomString(SpyRoom.#OWNER_KEY_LENGTH)
+    this.#ownerKey = generateRandomString(SpyRoom.#OWNER_KEY_LENGTH)
     this.#users = []
     this.#isRunning = false
     this.#isOnPause = false
@@ -187,7 +187,6 @@ module.exports = class SpyRoom {
     if (this.#playersCount() < SpyRoom.#MIN_PLAYERS_COUNT) { return }
     this.#isRunning = true
     this.#isOnPause = this.#isOnVoting = this.#isOnBrief = this.#isOnSpyChance = false
-    this.#state.lastStartMoment = Date.now()
     // Все игроки из массива пользователей вносятся в список игроков в состояние игры
     // Это позволяет сохранять информацию об игроке, даже если он отключился во время игры
     // До завершения игры перечень игроков не меняется
@@ -205,18 +204,18 @@ module.exports = class SpyRoom {
     this.#state.roundId = 0
     while (!this.#victoryCondition()) {
       // Случайный выбор локации
-      this.#state.location = this.#locations[Util.getRandomArrayIndex(this.#locations.length)]
+      this.#state.location = this.#locations[getRandomArrayIndex(this.#locations.length)]
       // Случайное распределение ролей между игроками
       if (this.#state.players.length < this.#options.spiesCount) {
         this.#options.spiesCount = this.#state.players.length
       }
       this.#state.players.forEach((player) => { player.isSpy = false })
-      do { this.#state.players[Util.getRandomArrayIndex(this.#state.players.length)].isSpy = true }
+      do { this.#state.players[getRandomArrayIndex(this.#state.players.length)].isSpy = true }
       while (this.#state.players.filter(players => players.isSpy).length < this.#options.spiesCount)
       for (const player of this.#state.players) {
         player.votes = this.#state.players.filter(p => p.username !== player.username).map(player => player.username)
-        player.role = player.isSpy ? null : this.#state.location.roles[Util.getRandomArrayIndex(this.#state.location.roles.length)]
-        player.spyKey = player.isSpy ? Util.generateRandomString(SpyRoom.#SPY_KEY_LENGTH) : null
+        player.role = player.isSpy ? null : this.#state.location.roles[getRandomArrayIndex(this.#state.location.roles.length)]
+        player.spyKey = player.isSpy ? generateRandomString(SpyRoom.#SPY_KEY_LENGTH) : null
       }
       this.#eventRoundStarted.notify({
         roundId: this.#state.roundId,
@@ -425,7 +424,29 @@ module.exports = class SpyRoom {
 
   #playersCount = () => this.#users.filter(user => !user.isWatcher).length
 
-  isShouldBeDestroyed = () => this.#users.length !== 0 && this.#state.lastStartMoment - Date.now() > 86400000
+  isShouldBeDestroyed = () => this.#users.length === 0
+
+  destroy () {
+    // ODO: Дополнить метод удаления комнаты
+    this.#eventUserJoined.destroy(); this.#eventUserJoined = null
+    this.#eventUsersChanged.destroy(); this.#eventUsersChanged = null
+    this.#eventUserRenamed.destroy(); this.#eventUserRenamed = null
+    this.#eventGameStarted.destroy(); this.#eventGameStarted = null
+    this.#eventGameOvered.destroy(); this.#eventGameOvered = null
+    this.#eventRoundStarted.destroy(); this.#eventRoundStarted = null
+    this.#eventRoundOvered.destroy(); this.#eventRoundOvered = null
+    this.#eventBriefStarted.destroy(); this.#eventBriefStarted = null
+    this.#eventBriefOvered.destroy(); this.#eventBriefOvered = null
+    this.#eventVotingStarted.destroy(); this.#eventVotingStarted = null
+    this.#eventVotingOvered.destroy(); this.#eventVotingOvered = null
+    this.#eventGamePaused.destroy(); this.#eventGamePaused = null
+    this.#eventGameResumed.destroy(); this.#eventGameResumed = null
+    this.#eventPlayerSpentVote.destroy(); this.#eventPlayerSpentVote = null
+    this.#eventSpyChanceStarted.destroy(); this.#eventSpyChanceStarted = null
+    this.#eventSpyChanceOvered.destroy(); this.#eventSpyChanceOvered = null
+    this.#eventLocationWasNamed.destroy(); this.#eventLocationWasNamed = null
+    return true
+  }
 
   setNewOptions ({ ownerKey, options }) {
     if (ownerKey !== this.#ownerKey || this.#isRunning) { return }

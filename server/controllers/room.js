@@ -1,42 +1,26 @@
 const consolaGlobalInstance = require('consola')
-const Room = require('../models/room.js')
+const roomsManager = require('../objects/RoomsManager')
+const SpyRoom = require('../objects/spy/SpyRoom')
+const generateRandomString = require('../util/generateRandomString')
 
-module.exports.checkRoom = async function (req, res) {
-  consolaGlobalInstance.log('BACKEND: ', 'checking room')
+module.exports.checkRoom = function (req, res) {
+  consolaGlobalInstance.log('BACKEND: ', 'check room')
   const roomId = req.query.roomId
-  try {
-    const room = await Room.findOne({ _id: roomId })
-    res.status(200).json({
-      exists: (room !== null)
-    })
-  } catch (e) {
-    consolaGlobalInstance.log(e)
-    res.status(500).json({
-      exists: false
-    })
-  }
+  res.status(200).json({ exists: !!roomsManager.getById(roomId) })
 }
 
-module.exports.getAllRooms = async function (req, res) {
-  const rooms = await Room.find({})
-  res.status(200).json({ rooms })
-}
-
-module.exports.getRoom = async function (req, res) {
-  const roomId = req.query.roomId
-  const room = await Room.findOne({ _id: roomId })
-  res.status(200).json({ options: room.originOptions })
-}
-
-module.exports.addRoom = async function (req, res) {
+module.exports.addRoom = function (req, res) {
+  consolaGlobalInstance.log('BACKEND: ', 'addRoom')
   const data = req.body
-  // Поменять поля
-  const room = new Room({
-    originOptions: JSON.stringify(data.originOptions),
-    game: data.game
-  })
-  await room.save()
-  res.status(200).json({
-    roomId: room.id
-  })
+  const originOptions = data.originOptions
+  const roomId = generateRandomString(16)
+  switch (data.game) {
+    case 'spy':
+      roomsManager.addRoom(new SpyRoom(roomId, originOptions.owner, originOptions.options, originOptions.locations))
+      break
+    default:
+      res.status(500)
+      return
+  }
+  res.status(200).json({ roomId })
 }

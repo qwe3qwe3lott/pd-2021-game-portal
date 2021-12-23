@@ -2,7 +2,7 @@
   <main>
     <b class="main__head-text">Список игр:</b>
     <br>
-    <nuxt-link class="game" :to="'spy'">
+    <nuxt-link class="game" :to="'/spy'">
       Играть в "Шпион"
     </nuxt-link>
   </main>

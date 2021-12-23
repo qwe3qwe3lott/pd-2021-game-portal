@@ -22,4 +22,9 @@ module.exports = class MyEvent {
       if (typeof listener === 'function') { listener(this.#sender, payload) }
     }
   }
+
+  destroy () {
+    this.#listeners.length = 0
+    this.#sender = this.#listeners = null
+  }
 }

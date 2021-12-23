@@ -1,9 +1,6 @@
-import { resolve as pResolve } from 'path'
-import consolaGlobalInstance from 'consola'
-const api = require('../axios/api')
-const SpyRoom = require('../objects/spy/SpyRoom')
-const { default: Data } = require(pResolve('./server/db'))
-const Util = require('../objects/Util')
+const consolaGlobalInstance = require('consola')
+const generateRandomString = require('../util/generateRandomString')
+const roomsManager = require('../objects/RoomsManager')
 
 const API = {
   version: 1.0,
@@ -42,26 +39,16 @@ const API = {
 }
 
 const getNamespace = (roomId, username) => `spy/${roomId}/${username}`
-const getRooms = () => Data.rooms.spy
-const getRoom = roomId => Data.rooms.spy.find(room => room.id === roomId)
 const toData = value => ({ data: value })
 const emit = (socket, evt, payload) => socket.emit(evt, toData(payload[evt]))
 
 export default function Svc (socket, io) {
   return Object.freeze({
     getAPI () { return API },
-    async joinRoom ({ roomId, username }) {
-      // TODO: userId
+    joinRoom ({ roomId, username }) {
       socket.username = username
-      let room = getRoom(roomId)
-      // Если комната есть в БД, но нет в ОЗУ
-      const roomShouldExists = await api.getters.checkRoom(roomId)
-      if (!room && roomShouldExists) {
-        const res = await api.getters.getRoomOriginOptions(roomId)
-        const originOptions = JSON.parse(res.data.options)
-        room = new SpyRoom(roomId, originOptions.owner, originOptions.options, originOptions.locations)
-        getRooms().push(room)
-      }
+      const room = roomsManager.getById(roomId)
+      if (room === null) { return }
       // Подписываемся на события комнаты
       const userJoinedHandler = room.eventUserJoined.subscribe((sender, payload) => {
         if (payload.username !== socket.username) { return }
@@ -175,7 +162,7 @@ export default function Svc (socket, io) {
       // В комнату может войти пользователь с уже задействавонным в комнате ником
       // Поэтому создаём временный ключ для идетнификации сокета пользователя, которого возможно нужно будет переименновать
       // После завершения входа нужно удалить ключ
-      socket.tempUserKey = Util.generateRandomString(6)
+      socket.tempUserKey = generateRandomString(6)
       room.addUser(username, socket.tempUserKey)
       // Подписываем пользователя на событие отключения
       socket.once('disconnect', () => {
@@ -204,50 +191,50 @@ export default function Svc (socket, io) {
     },
     // Переназначение роли пользователя между "игрок" и "зритель"
     become ({ roomId, username, becomeWatcher }) {
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room || room.isRunning) { return }
       becomeWatcher ? room.makeWatcher(username) : room.makePlayer(username)
     },
     startOrResumeGame ({ roomId, ownerKey }) {
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room) { return }
       if (room.isRunning) { room.resume(ownerKey) } else { room.startGame(ownerKey) }
     },
     pauseGame ({ roomId, ownerKey }) {
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room || !room.isRunning) { return }
       room.pause(ownerKey)
     },
     stopGame ({ roomId, ownerKey }) {
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room || !room.isRunning) { return }
       room.stop(ownerKey)
     },
     pinpointLocation ({ roomId, spyKey, username, location, roundId }) {
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room || !room.isRunning) { return }
       room.pinpointLocation({ spyKey, username, location, roundId })
     },
     startVotingAgainstPlayer ({ roomId, username, defendantUsername, roundId }) {
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room || !room.isRunning) { return }
       room.startVotingAgainstPlayer({ accuserUsername: username, defendantUsername, roundId })
     },
     voteAgainstPlayer ({ roomId, username, defendantUsername, voteFlag, roundId }) {
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room || !room.isRunning) { return }
       room.voteAgainstPlayer({ username, defendantUsername, voteFlag, roundId })
     },
     setNewRoomOptions ({ roomId, ownerKey, options }) {
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room || room.isRunning) { return }
       room.setNewOptions({ ownerKey, options })
     },
     changeUsername ({ roomId, oldUsername, newUsername }) {
       if (oldUsername === newUsername) { return }
-      const room = getRoom(roomId)
+      const room = roomsManager.getById(roomId)
       if (!room || room.isRunning) { return }
-      socket.tempUserKey = Util.generateRandomString(6)
+      socket.tempUserKey = generateRandomString(6)
       room.changeUsername(oldUsername, newUsername, socket.tempUserKey)
     }
   })
