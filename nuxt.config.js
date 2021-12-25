@@ -6,12 +6,26 @@ module.exports = {
     title: 'pd-2021-gama-portal',
     meta: [
       { charset: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: '' },
-      { name: 'format-detection', content: 'telephone=no' }
+      {
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1'
+      },
+      {
+        hid: 'description',
+        name: 'description',
+        content: ''
+      },
+      {
+        name: 'format-detection',
+        content: 'telephone=no'
+      }
     ],
     link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
+      {
+        rel: 'icon',
+        type: 'image/x-icon',
+        href: '/favicon.ico'
+      }
     ]
   },
   loading: { color: '#fff' },
@@ -40,12 +54,12 @@ module.exports = {
     proxy: true
   },
   // Build Configuration: https://go.nuxtjs.dev/config-build
-  build: {
-  },
+  build: {},
   serverMiddleware: [
     '~/server/serverMiddleware/index.js',
     {
-      path: 'api', handler: '~/server/index.js'
+      path: 'api',
+      handler: '~/server/index.js'
     }
   ],
   io: {
@@ -53,7 +67,8 @@ module.exports = {
       {
         name: 'spy',
         default: true,
-        url: process.env.NODE_ENV === 'production' ? 'https://portal-games-pd.ru' : 'http://localhost:3000'
+        url: 'http://localhost:3040'
+        // url: process.env.NODE_ENV === 'production' ? 'https://portal-games-pd.ru/api' : 'http://localhost:3040'
       }
     ]
   }
