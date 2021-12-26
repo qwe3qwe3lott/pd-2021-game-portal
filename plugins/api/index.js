@@ -4,7 +4,7 @@ import posts from '@/plugins/api/posts'
 
 export default function ({ $axios }, inject) {
   const instance = $axios.create({
-    baseURL: process.env.NODE_ENV === 'production' ? 'https://portal-games-pd.ru/api' : 'http://localhost:3000/api',
+    baseURL: 'http://localhost:3040/api',
     headers: {
       accept: 'applications/json'
     }

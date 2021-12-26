@@ -52,9 +52,13 @@ export default {
 .container{
   position: relative;
   height: 10em;
-  width: 12em;
   margin: 0.2em;
 }
+
+.container:hover .pointer{
+  display: inline-block;
+}
+
 .title{
   font-size: 1.2em;
   width: 100%;
@@ -77,5 +81,8 @@ export default {
   grid-template-rows: 90% 10%;
 }
 .pointer {
+  display: none;
+  color: var(--primary-color-primary-text);
+  font-size: 1.5em;
 }
 </style>
