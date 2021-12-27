@@ -16,6 +16,10 @@ const schema = new Schema({
     type: String,
     required: false
   },
+  meta: {
+    type: Object,
+    required: false
+  },
   locations_passed: {
     type: Number,
     required: false
