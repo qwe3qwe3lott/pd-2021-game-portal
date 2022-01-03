@@ -12,6 +12,9 @@
         </div>
       </div>
     </div>
+    <nuxt-link :to="'/'" class="exit-room">
+      Выйти из комнаты
+    </nuxt-link>
     <!---->
     <div class="temp-container">
       <div class="game-panel">
@@ -123,7 +126,10 @@
     </div>
 
     <div class="temp-container">
-      <div class="locations-container location-list">
+      <button class="button-show-location" @click="isVisibilityLocations = !isVisibilityLocations">
+        Локации
+      </button>
+      <div v-show="isVisibilityLocations" class="locations-container location-list">
         <LocationCard
           v-for="(loc, index) in locations"
           :key="index"
@@ -136,9 +142,6 @@
       </div>
     </div>
     <br>
-    <nuxt-link :to="'/'">
-      Выйти
-    </nuxt-link>
   </div>
 </template>
 
@@ -192,7 +195,8 @@ export default {
       },
       ioApi: {},
       ioData: {},
-      showOptionsCard: false
+      showOptionsCard: false,
+      isVisibilityLocations: true
     }
   },
   computed: {
@@ -491,6 +495,13 @@ export default {
   color: var(--primary-color-primary-text)
 }
 
+.exit-room {
+  text-decoration: none;
+  color: black;
+  display: flex;
+  justify-content: center;
+}
+
 .watchers-block {
   display: flex;
   gap: 10px;
@@ -574,6 +585,14 @@ export default {
   color: #efecec;
 }
 
+.button-show-location {
+  margin: 0 auto;
+  display: flex;
+  border: 2px solid white;
+  padding: 5px;
+  border-radius: 25px;
+}
+
 .location-list {
   justify-content: center;
 }
@@ -586,10 +605,23 @@ export default {
   display: flex;
   flex-wrap: wrap;
 }
+
 @media (max-width: 600px) {
-  .game-panel{
+  .game-panel {
     flex-direction: column;
     align-items: center;
+  }
+
+  .locations-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 400px) {
+  .locations-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>
