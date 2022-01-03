@@ -73,16 +73,17 @@ export default {
 .header__input{
   font-style: normal;
   font-weight: normal;
-  font-size: 14pt;
+  font-size: 0.9em;
   color: white;
   white-space:nowrap;
 }
 .input-form__input-field{
-  width: 50%;
-  height: 10%;
+  width: 15em;
+  height: 1.5em;
   background: #FFFFFF;
-  border-radius: 15px;
-  font-size: 14pt;
+  border-radius: 0.8em;
+  font-size: 0.8em;
+  padding: 0.2em;
   font-family: 'Press Start 2P', cursive;
 }
 .input-form__button{

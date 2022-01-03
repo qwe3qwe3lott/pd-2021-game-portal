@@ -36,7 +36,7 @@ export default {
   align-items: center;
   color: white;
   background-color: rgba(0,0,0,0.55);
-  border-radius: 15px;
-  padding: 1%;
+  border-radius: 0.9em;
+  padding: 0.5em;
 }
 </style>
