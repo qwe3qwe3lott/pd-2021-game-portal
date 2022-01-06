@@ -1,6 +1,6 @@
 <template>
-  <label class="checkbox">
-    <input :checked="requires" type="checkbox" class="checkbox" @input="$emit('input')">
+  <label class="checkbox" title="title">
+    <input :checked="state" type="checkbox" class="checkbox" @input="$emit('input')">
     <div class="checkbox__text">⁣</div>
   </label>
 </template>
@@ -9,7 +9,8 @@
 export default {
   name: 'Switcher',
   props: {
-    requires: { type: Boolean, default: () => true }
+    state: { type: Boolean, default: () => true },
+    title: { type: String, default: () => '' }
   }
 }
 </script>

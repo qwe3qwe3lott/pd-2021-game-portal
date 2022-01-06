@@ -1,7 +1,7 @@
 <template>
   <div :key="id" class="card">
     <div class="header">
-      <Switcher :requires="requires" @input="UPDATE_REQUIRE_LOCATION_FLAG({ locationId: id, flag: !requires})" />
+      <Switcher :state="requires" @input="UPDATE_REQUIRE_LOCATION_FLAG({ locationId: id, flag: !requires})" />
       <button class="title-button" @click="isOpened = !isOpened">
         {{ title }}
       </button>

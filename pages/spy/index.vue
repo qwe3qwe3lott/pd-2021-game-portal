@@ -84,39 +84,28 @@ export default {
       errorMessage: '',
       locationsRequiredAtLess: 3,
       filterText: '',
+      filterQuery: '',
       showOptionsCard: false,
-      importErrorMessage: '',
-      filteredLocations: []
+      importErrorMessage: ''
     }
   },
   computed: {
     ...mapGetters('spy', ['getRequiredLocations', 'getLocationsForExportToJSON']),
     ...mapState('spy', ['roomOptions', 'locations']),
-
+    filteredLocations () {
+      const filterQuery = this.filterQuery
+      if (!filterQuery) { return this.locations }
+      return this.locations.filter(location => location.title.toLowerCase().includes(filterQuery.toLowerCase()))
+    },
     requiredLocations () {
       return this.locations.filter(elem => elem.requires)
     }
   },
   watch: {
-    filterText: _.debounce(function () { this.filterLocations() }, 500)
-  },
-  mounted () {
-    this.filteredLocations = this.locations
+    filterText: _.debounce(function () { this.filterQuery = this.filterText }, 500)
   },
   methods: {
     ...mapMutations('spy', ['REPLACE_LOCATIONS', 'ADD_LOCATION', 'ACTIVATE_LOCATIONS', 'DEACTIVATE_LOCATIONS']),
-
-    filterLocations () {
-      const filterText = this.filterText
-      this.filteredLocations = this.locations.filter(function (elem) {
-        if (filterText === '') {
-          return true
-        } else {
-          return elem.title.toLowerCase().includes(filterText.toLowerCase())
-        }
-      })
-      consolaGlobalInstance.log('СТРАУСИНАЯ ЗАДНИЦА')
-    },
     exportJSON () {
       const data = JSON.stringify(this.getLocationsForExportToJSON)
       const blob = new Blob([data], { type: '' })

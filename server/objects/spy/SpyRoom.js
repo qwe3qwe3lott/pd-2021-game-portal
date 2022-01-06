@@ -54,11 +54,7 @@ module.exports = class SpyRoom {
     this.#isOnVoting = false
     this.#isOnSpyChance = false
     this.setOptions(options)
-    this.#locations = locations ?? [{
-      title: 'void',
-      url: null,
-      roles: ['void']
-    }]
+    this.#locations = locations ?? this.#getDefaultLocations()
     this.#state = {
       roundId: 0,
       lastStartMoment: Date.now(),
@@ -161,6 +157,7 @@ module.exports = class SpyRoom {
       if (player) {
         payload.player = player
         payload.location = (player.isSpy ? null : this.#state.location)
+        payload.roundId = this.#state.roundId
       }
     }
     this.#eventUserJoined.notify(payload)
@@ -465,4 +462,27 @@ module.exports = class SpyRoom {
     this.#eventUserRenamed.notify({ tempUserKey, username: newUsername })
     this.#eventUsersChanged.notify({ users: this.#users })
   }
+
+  #getDefaultLocations = () => ([
+    {
+      title: 'Больница',
+      img: 'https://portal-games-pd.ru/spy/originLocations/hospital.webp',
+      roles: ['Медсестра', 'Терапевт', 'Бабушка', 'Призывник', 'Хирург', 'Офтальмолог', 'Уборщик', 'Пациент', 'Студент', 'Охранник']
+    },
+    {
+      title: 'Школа',
+      img: 'https://portal-games-pd.ru/spy/originLocations/school.webp',
+      roles: ['Учительница', 'Школьник', 'Директор', 'Уборщик', 'Охранник', 'Трудовик', 'Учитель физкультуры', 'Двоечник', 'Отличник', 'Староста']
+    },
+    {
+      title: 'Парк',
+      img: 'https://portal-games-pd.ru/spy/originLocations/park.webp',
+      roles: ['Прохожий', 'Продавец хот-догов', 'Патрульный', 'Собака', 'Безработный', 'Читатель', 'Спортсмен', 'Активист', 'Садовник', 'Дворник']
+    },
+    {
+      title: 'Тюрьма',
+      img: 'https://portal-games-pd.ru/spy/originLocations/prison.webp',
+      roles: ['Дедушка', 'Заключённый', 'Охранник', 'Уборщик', 'Повар', 'Директор', 'Надзиратель', 'Палач', 'Адвокат', 'Трейдер']
+    }
+  ])
 }

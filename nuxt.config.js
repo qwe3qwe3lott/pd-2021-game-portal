@@ -53,8 +53,7 @@ module.exports = {
       {
         name: 'spy',
         default: true,
-        url: 'http://localhost:3040'
-        // url: process.env.NODE_ENV === 'production' ? 'https://portal-games-pd.ru' : 'http://localhost:3000'
+        url: process.env.NODE_ENV === 'production' ? 'https://portal-games-pd.ru' : 'http://localhost:3000'
       }
     ]
   }

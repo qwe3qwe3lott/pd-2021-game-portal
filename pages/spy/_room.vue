@@ -1,14 +1,23 @@
 <template>
   <div>
+    <input
+      ref="roomId"
+      v-model="currentURL"
+      class="hidden-room-id"
+      readonly
+      @focus="$event.target.select()"
+    >
     <div class="room-header">
-      <h1>Комната - {{ $route.params.room }}</h1>
+      <button @click="copyInviteLink">
+        Скопировать приглашение
+      </button>
       <div class="watchers-block">
         <button :disabled="gameIsRunning" @click="become(true)">
           Зрители:
         </button>
-        <span v-show="!watchers.length"> пустовато</span>
-        <div v-for="(user, index) in watchers" :key="index">
-          {{ user.username }}{{ (user.isOwner ? ' (owner)' : '') }}
+        <span v-show="!watchers.length"> зрителей нет</span>
+        <div v-for="(user, index) in watchers" :key="index" :style="{ 'font-weight': (user.isOwner ? 'bold': 'normal') }">
+          {{ user.username }}
         </div>
       </div>
     </div>
@@ -28,7 +37,7 @@
           <br>
           <!-- Таймер для голосования -->
           <div v-show="gameIsOnVoting || gameIsOnSpyChance">
-            <Timer :time="additionalTimerTime" :is-on-pause="gameIsOnPause"/>
+            <Timer :time="additionalTimerTime" :is-on-pause="gameIsOnPause" />
             <b v-show="!gameIsOnSpyChance">{{ voting.defendantUsername }} обвиняется в шпионаже</b>
             <b v-show="gameIsOnSpyChance">Шпион угадывает локацию</b>
             <div
@@ -80,8 +89,6 @@
         {{ winner }}
       </div>
     </div>
-    <br>
-
     <div class="temp-container">
       <div v-if="iAmOwner" class="panel-owner">
         <div class="base-button">
@@ -109,32 +116,36 @@
               alt="Закончить игру"
             >
           </button>
+          <button :disabled="gameIsRunning" @click="showOptionsCard = true">
+            <img
+              class="panel-owner__image"
+              :src="require('~/assets/svg/gear.svg')"
+              title="Расширенные настройки"
+              alt="Расширенные настройки"
+            >
+          </button>
         </div>
         <form v-if="!gameIsRunning" @submit.prevent="setNewRoomOptions()">
           <modal-window v-if="showOptionsCard" :title="'Расширенные настройки'" @close="showOptionsCard = false">
             <template #content>
-              <OptionsCard/>
-              config-game.png
+              <OptionsCard />
+              <input class="panel-owner__settings" type="submit" value="Обновить правила">
             </template>
           </modal-window>
-          <button class="panel-owner__settings" @click="showOptionsCard = true">
-            Расширенные настройки
-          </button>
-          <input class="panel-owner__settings" type="submit" value="Обновить правила">
         </form>
       </div>
     </div>
-
+    <div class="settings-block">
+      <Switcher :state="hideLocationsPictures" :title="'Скрывать картинки'" class="pictures-hider" @input="hideLocationsPictures = !hideLocationsPictures" />
+    </div>
     <div class="temp-container">
-      <button class="button-show-location" @click="isVisibilityLocations = !isVisibilityLocations">
-        Локации
-      </button>
-      <div v-show="isVisibilityLocations" class="locations-container location-list">
+      <div class="locations-container location-list">
         <LocationCard
           v-for="(loc, index) in locations"
           :key="index"
           :was-correct="loc.wasCorrect"
           :was-pinpointed="loc.wasPinpointed"
+          :image-hidden="hideLocationsPictures"
           :location="loc"
           :spy="gameIsRunning && !gameIsOnPause && !gameIsOnBrief && (!gameIsOnVoting || gameIsOnSpyChance) && (player ? player.isSpy : false)"
           @pinpoint="pinpointLocation"
@@ -148,17 +159,18 @@
 <script>
 import consolaGlobalInstance from 'consola'
 import { mapState } from 'vuex'
+import Switcher from '@/components/UI/inputs/Switcher'
 import LocationCard from '@/components/spy/LocationCard'
 import PlayerCard from '@/components/spy/PlayerCard'
 import Timer from '@/components/timer/Timer'
 import OptionsCard from '@/components/spy/OptionsCard'
-
 export default {
   components: {
     LocationCard,
     PlayerCard,
     Timer,
-    OptionsCard
+    OptionsCard,
+    Switcher
   },
   layout: 'gameLayout',
   async validate (ctx) {
@@ -196,7 +208,8 @@ export default {
       ioApi: {},
       ioData: {},
       showOptionsCard: false,
-      isVisibilityLocations: true
+      hideLocationsPictures: false,
+      currentURL: ''
     }
   },
   computed: {
@@ -264,6 +277,7 @@ export default {
     },
     'ioData.gameRunningFlag' (gameRunningFlag) {
       this.gameIsRunning = gameRunningFlag
+      if (!gameRunningFlag) { this.clearLocationsMarks() }
       consolaGlobalInstance.log('gameIsRunning', gameRunningFlag)
       this.anyGameIsRunningFlag = gameRunningFlag
     },
@@ -274,13 +288,10 @@ export default {
     'ioData.gameBriefFlag' (gameBriefFlag) {
       this.gameIsOnBrief = gameBriefFlag
       consolaGlobalInstance.log('gameIsOnBrief', gameBriefFlag)
-      if (!this.gameIsOnBrief) {
-        this.clearLocationsFlags()
-      }
     },
     'ioData.locationsTitles' (payload) {
       consolaGlobalInstance.log('locationsTitles', payload)
-      this.fullLocationsFlag(payload.spyLocation, payload.correctLocation)
+      this.setLocationsMarkers(payload.spyLocation, payload.correctLocation)
     },
     'ioData.gameVotingFlag' (gameVotingFlag) {
       this.gameIsOnVoting = gameVotingFlag
@@ -292,6 +303,7 @@ export default {
     },
     'ioData.roundId' (roundId) {
       this.roundId = roundId
+      this.clearLocationsMarks()
       consolaGlobalInstance.log('roundId', roundId)
     },
     'ioData.players' (players) {
@@ -324,6 +336,7 @@ export default {
     }
   },
   mounted () {
+    this.currentURL = window.location.href
     this.socket = this.$nuxtSocket({
       name: 'spy',
       channel: '/spy',
@@ -345,7 +358,10 @@ export default {
     this.usernameHandler()
   },
   methods: {
-
+    copyInviteLink () {
+      this.$refs.roomId.focus()
+      document.execCommand('copy')
+    },
     joinRoom () {
       consolaGlobalInstance.log('joinRoom')
       this.ioApi.joinRoom({
@@ -449,7 +465,7 @@ export default {
         roomId: this.roomId,
         ownerKey: this.ownerKey,
         options: newOptions
-      })
+      }).then(() => { this.showOptionsCard = false })
     },
     changeUsername () {
       if (this.gameIsRunning || this.username === this.oldUsername) {
@@ -461,13 +477,13 @@ export default {
         newUsername: this.username
       })
     },
-    clearLocationsFlags () {
+    clearLocationsMarks () {
       this.locations.forEach((location) => {
         delete location.wasCorrect
         delete location.wasPinpointed
       })
     },
-    fullLocationsFlag (spyTitle, correctTitle) {
+    setLocationsMarkers (spyTitle, correctTitle) {
       const spyLocationId = this.locations.findIndex(loc => loc.title === spyTitle)
       const correctLocationId = this.locations.findIndex(loc => loc.title === correctTitle)
       if (correctLocationId !== -1) {
@@ -486,6 +502,10 @@ export default {
 </script>
 
 <style scoped>
+.hidden-room-id {
+  position: fixed;
+  top: -100px
+}
 
 .room-header {
   display: flex;
@@ -585,12 +605,9 @@ export default {
   color: #efecec;
 }
 
-.button-show-location {
-  margin: 0 auto;
-  display: flex;
-  border: 2px solid white;
-  padding: 5px;
-  border-radius: 25px;
+.settings-block {
+  display: grid;
+  place-items: center;
 }
 
 .location-list {
@@ -610,18 +627,6 @@ export default {
   .game-panel {
     flex-direction: column;
     align-items: center;
-  }
-
-  .locations-container {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 400px) {
-  .locations-container {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

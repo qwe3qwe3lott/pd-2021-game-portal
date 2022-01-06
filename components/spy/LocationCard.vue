@@ -1,14 +1,11 @@
 <template>
   <div class="container">
-    <div class="grid">
-      <p class="title" :style="{'color': wasPinpointed && wasCorrect ? 'orange' : (wasCorrect ? 'green' : (wasPinpointed ? 'red' : 'white'))}">
+    <div class="grid" :style="{'background-color': wasPinpointed && wasCorrect ? 'rgba(128,128,0,0.5)' : (wasCorrect ? 'rgba(0,255,0,0.5)' : (wasPinpointed ? 'rgba(255,0,0,0.5)' : 'unset')) }">
+      <button class="title" :style="{'cursor': (spy ? 'pointer' : 'default')}" :disabled="!spy" @click="$emit('pinpoint', location)">
         {{ location.title }}
-      </p>
-      <button v-if="spy" class="pointer" @click="$emit('pinpoint', location)">
-        Указать
       </button>
     </div>
-    <img :alt="location.title" :src="location.img" class="image" @error="onImgError">
+    <img v-show="!imageHidden" :alt="location.title" :src="location.img" class="image" @error="onImgError">
   </div>
 </template>
 
@@ -18,19 +15,15 @@ export default {
   props: {
     location: {
       type: Object,
-      default: () => {
-        return {
-          title: 'void',
-          img: ''
-        }
-      }
+      default: () => { return { title: 'Ошибка', img: '' } }
     },
     spy: { type: Boolean, default: () => false },
     wasCorrect: { type: Boolean, default: () => false },
-    wasPinpointed: { type: Boolean, default: () => false }
+    wasPinpointed: { type: Boolean, default: () => false },
+    imageHidden: { type: Boolean, default: () => false }
   },
   data: () => ({
-    imgErrorSrc: require('@/assets/svg/error404.svg')
+    imgErrorSrc: require('../../assets/svg/error404.svg')
   }),
   methods: {
     onImgError (e) {
@@ -43,25 +36,25 @@ export default {
 
 <style scoped>
 .image{
-  width: 100%;
+  width: 10em;
   object-fit: cover;
-  height: 100%;
-  border-radius: 1em;
-  border: black 0.1em solid;
+  height: 8em;
 }
 .container{
+  min-height: 1.5em;
+  width: 10em;
+  height: fit-content;
   position: relative;
-  height: 10em;
   margin: 0.2em;
-}
-
-.container:hover .pointer{
-  display: inline-block;
+  border-radius: 1em;
+  border: black 0.1em solid;
+  background-color: var(--grey-background);
+  overflow: hidden;
 }
 
 .title{
   font-size: 1.2em;
-  width: 100%;
+  width: 8em;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -74,15 +67,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 100%;
-  width: 100%;
   display: grid;
   place-items: center;
-  grid-template-rows: 90% 10%;
-}
-.pointer {
-  display: none;
-  color: var(--primary-color-primary-text);
-  font-size: 1.5em;
 }
 </style>

@@ -69,6 +69,7 @@ export default function Svc (socket, io) {
           if (payload.player) {
             emit(socket, 'player', payload)
             emit(socket, 'location', payload)
+            emit(socket, 'roundId', payload)
           }
         }
         consolaGlobalInstance.log(getNamespace(sender.id, socket.username), ': User joined')
