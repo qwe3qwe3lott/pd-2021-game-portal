@@ -15,7 +15,7 @@ export default {
 <style scoped>
 footer{
   margin: 0;
-  padding: 0.5% 0 0.5% 0;
+  padding: 0.5em 0 0.5em 0;
   width: 100%;
   height: max-content;
   background: rgba(0, 0, 0, 0.5);

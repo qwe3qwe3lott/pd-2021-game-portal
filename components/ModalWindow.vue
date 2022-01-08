@@ -55,6 +55,7 @@ export default {
 .title {
   grid-area: title;
   text-align: center;
+  max-width: 36em;
 }
 .content {
   grid-area: content;
