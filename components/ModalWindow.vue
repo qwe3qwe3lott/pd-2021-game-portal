@@ -49,16 +49,30 @@ export default {
 .close {
   height: 1.5em;
   width: 1.5em;
-  background: url("../assets/svg/cross-icon.svg");
+  background-color: var(--primary-color-primary-text);
+  mask: url("./assets/svg/cross-icon.svg");
+  mask-repeat: no-repeat;
+  mask-size: cover;
   place-self: end;
   grid-area: close;
 }
 .title {
+  color: var(--primary-color-primary-text);
   grid-area: title;
   text-align: center;
 }
 .content {
+  max-height: calc(100vh - 7em);
+  overflow-y: scroll;
   max-width: 90vw;
   grid-area: content;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  display: grid;
+  place-items: center;
+  grid-gap: 0.3em;
+}
+.content::-webkit-scrollbar {
+  display: none;
 }
 </style>

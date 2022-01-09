@@ -83,7 +83,7 @@
         </div>
       </div>
     </div>
-    <div v-show="winners.length > 0">
+    <div v-show="winners.length > 0" class="winners-pane">
       <b>{{ winners.length === 1 ? 'Победитель:' : 'Победители:' }}</b>
       <div v-for="(winner, index) in winners" :key="index">
         {{ winner }}
@@ -600,9 +600,12 @@ export default {
   display: flex;
   justify-content: space-between;
 }
-
+.winners-pane {
+  display: grid;
+  place-items: center;
+}
 .panel-owner__settings {
-  color: #efecec;
+  color: var(--primary-color-primary-text);
 }
 
 .settings-block {

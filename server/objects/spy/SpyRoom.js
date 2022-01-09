@@ -1,6 +1,7 @@
 const MyEvent = require('../MyEvent')
 const generateRandomString = require('../../util/generateRandomString')
 const getRandomArrayIndex = require('../../util/getRandomArrayIndex')
+const api = require('../../axios/api')
 module.exports = class SpyRoom {
   static #ADDITIONAL_USERNAME_CHAR = ')'
   static #OWNER_KEY_LENGTH = 6
@@ -197,16 +198,19 @@ module.exports = class SpyRoom {
       })
     }
     this.#eventGameStarted.notify({ players: this.#state.players })
+    if (this.#state.players.length < this.#options.spiesCount) {
+      this.#options.spiesCount = this.#state.players.length
+    }
+    // Обнуляется статика
+    this.#state.meta = { spyWins: 0, spyLoses: 0, spiesCount: this.#options.spiesCount, locationsCount: this.#locations.length }
     // Цикл выполняется до тек пор, пока один из игроков не наберёт нужное количество очков
     // Каждая итерация цикла знаменует одни раунд партии
     this.#state.roundId = 0
+    let res = {}
     while (!this.#victoryCondition()) {
       // Случайный выбор локации
       this.#state.location = this.#locations[getRandomArrayIndex(this.#locations.length)]
       // Случайное распределение ролей между игроками
-      if (this.#state.players.length < this.#options.spiesCount) {
-        this.#options.spiesCount = this.#state.players.length
-      }
       this.#state.players.forEach((player) => { player.isSpy = false })
       do { this.#state.players[getRandomArrayIndex(this.#state.players.length)].isSpy = true }
       while (this.#state.players.filter(players => players.isSpy).length < this.#options.spiesCount)
@@ -223,7 +227,6 @@ module.exports = class SpyRoom {
       })
       // Запуск таймера времени раунда
       this.#state.roundTime = this.#options.roundTime
-      let res = {}
       while (this.#state.roundTime > 0) {
         res = await new Promise((resolve) => {
           this.#resolve = resolve
@@ -278,11 +281,13 @@ module.exports = class SpyRoom {
                 })
                 if (res.isTimeout) {
                   this.#playersAccusedSpy()
+                  this.#state.meta.spyLoses++
                 }
                 this.#isOnSpyChance = false
                 this.#eventSpyChanceOvered.notify({})
               } else {
                 this.#playersAccusedSpy()
+                this.#state.meta.spyLoses++
               }
             } else {
               this.#state.players.filter(player => player.isSpy).forEach((player) => { player.score += this.#options.spyWinPoints })
@@ -303,6 +308,8 @@ module.exports = class SpyRoom {
       if (res.toStopGame) { break }
       // Если раунд закончился по истечении времени
       if (res.isTimeout) {
+        if (this.#options.spyTimeoutPoints > 0 && this.#options.playerTimeoutPoints <= 0) { this.#state.meta.spyWins++ }
+        if (this.#options.playerTimeoutPoints > 0 && this.#options.spyTimeoutPoints <= 0) { this.#state.meta.spyLoses++ }
         this.#state.players.forEach((player) => { player.score += player.isSpy ? this.#options.spyTimeoutPoints : this.#options.playerTimeoutPoints })
       }
       this.#eventRoundOvered.notify({
@@ -334,6 +341,7 @@ module.exports = class SpyRoom {
     }
     this.#isRunning = false
     this.#eventGameOvered.notify({ winners: this.#getWinnersUsernames() })
+    if (!res.toStopGame) { this.#sendStatistics() }
   }
 
   #playersAccusedSpy = () => {
@@ -358,10 +366,12 @@ module.exports = class SpyRoom {
     if (!spy || spy.spyKey !== spyKey || roundId !== this.#state.roundId) { return }
     if (this.#state.location.title === location.title) {
       spy.score += this.#isOnSpyChance ? this.#options.spyChanceWinPoints : this.#options.spyWinPoints
+      this.#state.meta.spyWins++
     } else {
       for (const player of this.#state.players) {
         if (player !== spy) { player.score += this.#options.playerWinPoints }
       }
+      this.#state.meta.spyLoses++
     }
 
     this.#eventLocationWasNamed.notify({ correctLocation: this.#state.location.title, spyLocation: location.title })
@@ -486,4 +496,12 @@ module.exports = class SpyRoom {
       roles: ['Дедушка', 'Заключённый', 'Охранник', 'Уборщик', 'Повар', 'Директор', 'Надзиратель', 'Палач', 'Адвокат', 'Трейдер']
     }
   ])
+
+  #sendStatistics = () => {
+    api.posts.sendStatistics({
+      game: 'spy',
+      numberOfPlayers: this.#state.players.length,
+      meta: this.#state.meta
+    })
+  }
 }

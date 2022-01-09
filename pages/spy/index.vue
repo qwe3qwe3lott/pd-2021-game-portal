@@ -10,23 +10,23 @@
             <OptionsCard />
           </template>
         </modal-window>
-        <button type="button" @click="showOptionsCard = true">
-          Расширенные настройки
-        </button>
         <input class="button" type="submit" value="Создать комнату">
         <p class="error">
           {{ errorMessage }}
         </p>
       </form>
-      <p class="locationCounter">
-        {{ requiredLocations.length }} из {{ locations.length }} локаций задействовано
-      </p>
-      <input
-        v-model.trim="filterText"
-        class="filter-input"
-        placeholder="Название локации для поиска"
-        type="text"
-      >
+      <div class="main-container">
+        <p class="locationCounter">
+          {{ requiredLocations.length }} из {{ locations.length }} локаций задействовано
+        </p>
+        <input
+          v-model.trim="filterText"
+          class="filter-input"
+          placeholder="Поиск локаций"
+          type="text"
+        >
+        <button type="button" class="advanced-options-button" @click="showOptionsCard = true" />
+      </div>
       <button class="button" @click="ACTIVATE_LOCATIONS">
         Выбрать все локации
       </button>
@@ -178,18 +178,33 @@ export default {
 </script>
 
 <style scoped>
-.game-body{
-  background: url("../../assets/svg/spy/background.webp") no-repeat #FFFFFF;
-  background-attachment: fixed;
-  background-position: center bottom;
-  background-size: cover;
+.advanced-options-button {
+  height: 1.5em;
+  width: 1.5em;
+  mask: url("../../assets/svg/gear.svg");
+  background-color: var(--primary-color-primary-text);
+  mask-repeat: no-repeat;
+  mask-size: cover;
 }
-.game-wrapper{
+.game-body {
+  background: #FFFFFF url("../../assets/svg/spy/background.webp") no-repeat fixed center bottom;
+  background-size: cover;
+  display: grid;
+}
+.game-wrapper {
   background-color: rgba(0,0,0,0.6);
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1 1 auto;
+  padding-bottom: 1em;
+}
+.main-container {
+  display: grid;
+  place-items: center;
+  grid-gap: 0.3em;
+  background-color: var(--primary-color);
+  padding: 0.5em;
+  border-radius: 1em;
 }
 .filter-input{
   border-radius: 1em;
@@ -198,7 +213,6 @@ export default {
   padding: 0.5em;
 }
 .locationCounter {
-  margin: 0.5em 0;
   color: white;
 }
 .start-handler {

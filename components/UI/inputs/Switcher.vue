@@ -20,44 +20,43 @@ export default {
   position: absolute;
   z-index: -1;
   opacity: 0;
-  margin: 10px 0 0 20px;
+  margin: 0.5em 0 0 1em;
 }
 .checkbox__text {
   position: relative;
-  padding: 0 0 0 60px;
+  padding: 0 0 0 3em;
   cursor: pointer;
 }
 .checkbox__text:before {
   content: '';
   position: absolute;
-  top: -4px;
+  top: -0.1em;
   left: 0;
-  width: 50px;
-  height: 26px;
-  border-radius: 13px;
+  width: 2.5em;
+  height: 1.3em;
+  border-radius: 0.65em;
   background: black;
-  box-shadow: inset 0 2px 3px rgba(0,0,0,.2);
+  box-shadow: inset 0 0.1em 0.15em rgba(0,0,0,.2);
   transition: .2s;
 }
 .checkbox__text:after {
   content: '';
   position: absolute;
-  top: -2px;
-  left: 2px;
-  width: 22px;
-  height: 22px;
-  border-radius: 10px;
+  left: 0.1em;
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 0.5em;
   background: #E25225;
-  box-shadow: 0 2px 5px rgba(0,0,0,.3);
+  box-shadow: 0 0.1em 0.25em rgba(0,0,0,.3);
   transition: .2s;
 }
 .checkbox input:checked + .checkbox__text:before {
   background: white;
 }
 .checkbox input:checked + .checkbox__text:after {
-  left: 26px;
+  left: 1.3em;
 }
 .checkbox input:focus + .checkbox__text:before {
-  box-shadow: inset 0 2px 3px rgba(0,0,0,.2), 0 0 0 3px rgba(255,255,0,.7);
+  box-shadow: inset 0 0.1em 0.15em rgba(0,0,0,.2), 0 0 0 0.15em rgba(255,255,0,.7);
 }
 </style>

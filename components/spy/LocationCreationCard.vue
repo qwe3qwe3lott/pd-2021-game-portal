@@ -82,14 +82,15 @@ export default {
   color: var(--primary-color-primary-text);
 }
 .body{
-  margin-top: 0.4em;
-  width: max-content;
   height: fit-content;
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  justify-content: center;
   background-color: var(--modal-background-color);
   border-radius: 0.5em;
+  margin-bottom: 0.3em;
   padding: 0.3em;
-  gap: 1em;
 }
 .title-button {
   width: 100%;
@@ -98,15 +99,17 @@ export default {
   white-space: nowrap;
 }
 .delete-button {
-  width: 2em;
+  min-width: 1.5em;
+  max-width: 1.5em;
   height: 1.5em;
-  background-color: white;
+  background-color: var(--primary-color-primary-text);
   mask: url("./assets/svg/trash-icon.svg");
   mask-repeat: no-repeat;
   mask-size: cover;
 }
 .info {
   display: grid;
+  place-items: center;
   gap: 0.5em;
 }
 </style>

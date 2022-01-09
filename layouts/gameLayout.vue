@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
     <Nuxt v-if="username" class="main" />
-    <Footer />
+    <Footer class="footer" />
   </div>
 </template>
 
@@ -18,13 +18,11 @@ export default {
 </script>
 
 <style scoped>
-
 .wrapper {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
-
 .main {
   flex: 1 1 auto;
 }

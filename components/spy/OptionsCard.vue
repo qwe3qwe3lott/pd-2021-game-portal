@@ -31,12 +31,21 @@ export default {
 .card {
   border: black 1px solid;
   width: fit-content;
-  display: flex;
-  flex-direction: column;
   align-items: center;
   color: white;
   background-color: rgba(0,0,0,0.55);
   border-radius: 0.9em;
   padding: 0.5em;
+}
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 0.2em;
+}
+.input {
+  display: block;
+  padding: 0.2em;
+  border-radius: 1em;
 }
 </style>

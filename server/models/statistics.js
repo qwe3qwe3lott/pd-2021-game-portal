@@ -8,20 +8,12 @@ const schema = new Schema({
     type: String,
     required: true
   },
-  number_of_players: {
+  numberOfPlayers: {
     type: Number,
-    required: false
-  },
-  winner: {
-    type: String,
     required: false
   },
   meta: {
     type: Object,
-    required: false
-  },
-  locations_passed: {
-    type: Number,
     required: false
   },
   creationTime: {

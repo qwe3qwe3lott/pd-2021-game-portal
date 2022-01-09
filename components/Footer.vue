@@ -18,6 +18,6 @@ footer{
   padding: 0.5em 0 0.5em 0;
   width: 100%;
   height: max-content;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--primary-color-darker);
 }
 </style>

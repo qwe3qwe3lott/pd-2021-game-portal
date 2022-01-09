@@ -20,7 +20,6 @@
 
 <script>
 import { mapState } from 'vuex'
-import consolaGlobalInstance from 'consola'
 import ModalWindow from '~/components/ModalWindow'
 export default {
   components: {
@@ -37,9 +36,7 @@ export default {
   },
   methods: {
     toShowGameDescription (key) {
-      consolaGlobalInstance.log(this.gameDescriptions)
       this.gameDescription = this.gameDescriptions.find(game => game.key === key).description
-      consolaGlobalInstance.log(this.gameDescription)
       this.showGameDescription = true
     }
   }
@@ -54,7 +51,6 @@ main{
   font-family: 'Press Start 2P', cursive;
 }
 .main__head-text{
-  font-size: 16pt;
   color: white;
   margin: 1%;
 }
@@ -92,6 +88,10 @@ main{
   background-color: #a6270d;
 }
 .game-description {
+  background-color: var(--primary-color-darker);
+  color: var(--primary-color-primary-text);
+  padding: 0.3em;
+  border-radius: 1em;
   width: fit-content;
   text-indent: 5em;
   line-height: 1.5em;
