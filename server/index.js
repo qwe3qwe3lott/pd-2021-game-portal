@@ -3,7 +3,6 @@ const express = require('express')
 const cors = require('cors')
 const { Nuxt, Builder } = require('nuxt')
 const config = require('../nuxt.config.js')
-const roomsManager = require('./objects/RoomsManager')
 require('dotenv').config()
 require('./config/database')
 
@@ -37,7 +36,6 @@ async function start () {
     await nuxt.ready()
   }
   consolaGlobalInstance.log('Nuxt app ready!')
-  roomsManager.start()
 }
 
 app.use(express.json())

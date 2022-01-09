@@ -112,6 +112,7 @@ module.exports = class SpyRoom {
 
   // Добавление пользователя в массив пользователей с последующим вызовом событий для оповещения пользователей в комнате
   addUser (username, tempUserKey) {
+    if (username.length > 30) { username = username.substring(0, 30) }
     // Переименнование пользователя при совпадении ников
     if (this.#users.some(user => user.username === username)) {
       while (this.#users.some(user => user.username === username)) {

@@ -1,6 +1,6 @@
 <template>
   <div class="card">
-    <label v-for="(option, index) in roomOptions" :key="index">
+    <label v-for="(option, index) in roomOptions" :key="index" class="label">
       {{ option.description }}
       <input
         class="input"

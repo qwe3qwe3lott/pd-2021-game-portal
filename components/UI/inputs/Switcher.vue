@@ -1,5 +1,5 @@
 <template>
-  <label class="checkbox" title="title">
+  <label class="checkbox" :title="title">
     <input :checked="state" type="checkbox" class="checkbox" @input="$emit('input')">
     <div class="checkbox__text">⁣</div>
   </label>

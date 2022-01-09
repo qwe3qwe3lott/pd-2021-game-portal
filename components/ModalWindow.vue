@@ -36,6 +36,7 @@ export default {
   background-color: var(--modal-background-color);
 }
 .window {
+  max-width: 90vw;
   background-color: var(--primary-color);
   padding: 0.3em;
   border-radius: 0.5em;
@@ -55,9 +56,9 @@ export default {
 .title {
   grid-area: title;
   text-align: center;
-  max-width: 36em;
 }
 .content {
+  max-width: 90vw;
   grid-area: content;
 }
 </style>

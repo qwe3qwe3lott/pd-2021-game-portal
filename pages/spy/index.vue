@@ -179,9 +179,10 @@ export default {
 
 <style scoped>
 .game-body{
-  background: url("../../assets/svg/spy/background.webp") no-repeat center top fixed #FFFFFF;
+  background: url("../../assets/svg/spy/background.webp") no-repeat #FFFFFF;
+  background-attachment: fixed;
+  background-position: center bottom;
   background-size: cover;
-  display: flex;
 }
 .game-wrapper{
   background-color: rgba(0,0,0,0.6);
@@ -192,7 +193,8 @@ export default {
 }
 .filter-input{
   border-radius: 1em;
-  width: 20em;
+  width: 15vw;
+  min-width: 12em;
   padding: 0.5em;
 }
 .locationCounter {

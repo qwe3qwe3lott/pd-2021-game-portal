@@ -7,11 +7,15 @@
       <button class="input-form__button" @click="editMode = true" />
     </div>
     <form v-else class="input-block" @submit.prevent="submitUsername">
-      <p class="header__input">
-        Введите ваш ник:
-      </p>
-      <input v-model.trim="usernameField" class="input-form__input-field" type="text" minlength="1" maxlength="30">
-      <input class="input-form__button" type="submit" value="Сохранить">
+      <input
+        v-model.trim="usernameField"
+        class="input-form__input-field"
+        type="text"
+        minlength="1"
+        maxlength="30"
+        placeholder="Введите ваш ник"
+      >
+      <input class="input-form__button" type="submit" value="">
     </form>
   </div>
 </template>
@@ -49,6 +53,7 @@ export default {
   },
   methods: {
     submitUsername () {
+      if (this.usernameField.length > 30) { this.usernameField = this.usernameField.substring(0, 30) }
       this.username = { username: this.usernameField, isServerRename: false }
       localStorage.setItem(this.localStorageKey, this.usernameField)
       this.editMode = false
@@ -58,9 +63,11 @@ export default {
 </script>
 
 <style scoped>
-
+.main-container {
+  max-width: 100%;
+}
 .input-block{
-  width: max-content;
+  width: fit-content;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -68,33 +75,27 @@ export default {
   justify-self: center;
   gap: 1em;
   margin: 0 auto;
-  font-family: 'Press Start 2P', cursive;
 }
 .header__input{
-  font-style: normal;
-  font-weight: normal;
-  font-size: 0.9em;
   color: white;
-  white-space:nowrap;
+  overflow-wrap: break-word;
 }
 .input-form__input-field{
-  width: 15em;
-  height: 1.5em;
+  width: 10em;
+  height: 1.2em;
   background: #FFFFFF;
   border-radius: 0.8em;
-  font-size: 0.8em;
   padding: 0.2em;
-  font-family: 'Press Start 2P', cursive;
 }
 .input-form__button{
-  width: 2em;
-  height: 2em;
-  padding: 0.1em;
+  width: 1.5em;
+  height: 1.5em;
+  padding: 0.2em;
   border: none;
-  border-radius: 0.5em;
+  border-radius: 0.7em;
   background: url("../assets/svg/edit-icon.svg");
   background-color: #E54917;
-  background-size: cover;
+  background-size: contain;
   color: white;
   cursor: pointer;
 }
