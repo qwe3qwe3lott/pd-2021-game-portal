@@ -101,7 +101,7 @@ module.exports = class SpyRoom {
       spyChanceWinPoints: options.spyChanceWinPoints ?? 2,
       spyTimeoutPoints: options.spyTimeoutPoints ?? 2,
       playerWinPoints: options.playerWinPoints ?? 1,
-      playerBonusPoints: options.playerBonusPoints ?? 2,
+      playerBonusPoints: options.playerBonusPoints ?? 1,
       playerTimeoutPoints: options.playerTimeoutPoints ?? 0,
       winScore: options.winScore ?? 10,
       roundTime: options.roundTime ?? 60,
@@ -290,7 +290,15 @@ module.exports = class SpyRoom {
                 this.#state.meta.spyLoses++
               }
             } else {
-              this.#state.players.filter(player => player.isSpy).forEach((player) => { player.score += this.#options.spyWinPoints })
+              // Если голосование начал не шпион, то все шпионы выигрывают
+              // Если голосование начал шпион, то выигрывает только начавший голосование шпион
+              const spyBeganVoting = this.#state.players.find(player => player.username === this.#state.voting.accuserUsername).isSpy
+              if (spyBeganVoting) {
+                this.#state.players.filter(player => player.isSpy).forEach((player) => { player.score += player.username === this.#state.voting.accuserUsername ? this.#options.spyWinPoints : this.#options.playerWinPoints })
+              } else {
+                this.#state.players.filter(player => player.isSpy).forEach((player) => { player.score += this.#options.spyWinPoints })
+              }
+              this.#eventLocationWasNamed.notify({ correctLocation: this.#state.location.title })
             }
             // Для выхода из цикла ПОСЛЕ данной итерации
             this.#state.roundTime = 0
@@ -347,6 +355,7 @@ module.exports = class SpyRoom {
   #playersAccusedSpy = () => {
     this.#state.players.filter(player => player.username !== this.#state.voting.defendantUsername)
       .forEach((player) => { player.score += player.username === this.#state.voting.accuserUsername ? this.#options.playerWinPoints + this.#options.playerBonusPoints : this.#options.playerWinPoints })
+    this.#eventLocationWasNamed.notify({ correctLocation: this.#state.location.title })
   }
 
   #resolveTimer = (payload) => {
@@ -370,6 +379,9 @@ module.exports = class SpyRoom {
     } else {
       for (const player of this.#state.players) {
         if (player !== spy) { player.score += this.#options.playerWinPoints }
+      }
+      if (this.#isOnSpyChance) {
+        this.#state.players.find(player => player.username === this.#state.voting.accuserUsername).score += this.#options.playerBonusPoints
       }
       this.#state.meta.spyLoses++
     }
