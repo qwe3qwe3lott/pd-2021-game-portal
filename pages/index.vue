@@ -7,13 +7,22 @@
         </p>
       </template>
     </ModalWindow>
-    <b class="main__head-text">Список игр:</b>
+    <b class="main__head-text">Список мультиплеерных игр:</b>
     <br>
     <div class="game-holder">
       <nuxt-link class="game-button" :to="'/spy'">
         Играть в "Шпион"
       </nuxt-link>
       <button class="about-game" @click="toShowGameDescription('spy')" />
+    </div>
+    <p class="main__head-text">
+      <b>Список одиночных игр:</b>
+    </p>
+    <div class="game-holder">
+      <nuxt-link class="game-button" :to="'/aim'">
+        Играть в "АимТрейнер"
+      </nuxt-link>
+      <button class="about-game" @click="toShowGameDescription('aim')" />
     </div>
   </main>
 </template>
