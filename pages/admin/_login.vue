@@ -1,39 +1,32 @@
 <template>
   <div class="form-auth">
-    <v-form
+    <form
       ref="form"
-      v-model="valid"
-      lazy-validation
       class="form-auth__items-form"
     >
-      <v-text-field
+      <input
         v-model="login"
-        :rules="loginRules"
-        label="Логин"
         required
+        placeholder="Логин"
       />
-
-      <v-text-field
+      <input
         v-model="password"
-        :append-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
-        :rules="passwordRules"
         :type="showPassword ? 'text' : 'password'"
-        label="Пароль"
+        placeholder="Пароль"
         required
         @click:append="showPassword = !showPassword"
       />
-      <v-btn
+      <button
         class="mr-4"
         @click="validate"
       >
         Войти
-      </v-btn>
-    </v-form>
+      </button>
+    </form>
   </div>
 </template>
 
 <script>
-import consolaGlobalInstance from 'consola'
 
 export default {
   name: 'Login',
@@ -55,8 +48,6 @@ export default {
   methods: {
     validate () {
       if (this.password.length && this.login.length) {
-        consolaGlobalInstance.log('mir')
-        consolaGlobalInstance.log(this.password, this.login)
         this.$back.getters.checkUser(
           this.login,
           this.password
@@ -67,6 +58,8 @@ export default {
           } else if (data?.exists) {
             alert('Неверный пароль')
           }
+        }).catch(() => {
+          alert('Сервис не доступен')
         })
       }
     }
@@ -75,8 +68,28 @@ export default {
 </script>
 
 <style scoped>
+
+.form-auth__items-form{
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  border-radius: 10px;
+  background-color: #e2e2e2;
+  padding: 20px;
+}
+
 .form-auth {
-  max-width: 500px;
+  display: flex;
+  max-width: 300px;
+  height: 100vh;
   margin: 0 auto;
+  align-items: center;
+}
+
+.form-auth__items-form input{
+  font-size: 30px;
+  padding: 5px;
+  border-radius: 5px;
 }
 </style>

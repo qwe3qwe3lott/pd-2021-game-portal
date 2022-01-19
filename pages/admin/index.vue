@@ -1,10 +1,14 @@
 <template>
   <div class="main">
+    <button
+      class="exit_button"
+      @click="exit"
+    >
+      Выйти
+    </button>
     <h1 class="page-title">Статистика по играм</h1>
     <CardDashboard
-      v-for="(statistics, index) in statisticsData"
-      :key="index"
-      :statistics="statistics"
+      :statistics="showStatistics()"
     />
   </div>
 </template>
@@ -17,39 +21,48 @@ export default {
   layout: 'empty',
   data () {
     return {
-      statisticsData: []
+      statisticsData: null
     }
   },
   beforeMount () {
     this.checkAuth()
-    this.showStatistics()
   },
   methods: {
+    exit () {
+      localStorage.setItem('auth', '')
+      this.$router.push('/')
+    },
     checkAuth () {
       if (!(localStorage.getItem('auth')?.length > 0)) {
         this.$router.push('/admin/login')
       }
     },
-    showStatistics () {
-      this.$back.getters.getAllStatistics().then(({ data }) => {
-        for (const item in data) {
-          this.statisticsData.push({
-            nameGame: item,
-            statisticsGame: data[item]
-          })
-        }
-      })
+    async showStatistics () {
+      const { data } = await this.$back.getters.getAllStatistics()
+      const array = data.spy
+      const result = []
+      for (const item in array) {
+        result.push(array[item].meta)
+      }
+      return result
     }
   }
 }
+
 </script>
 
 <style scoped>
-.main{
+
+.exit_button{
+  display: flex;
+  margin-left: auto;
+}
+.main {
   padding: 40px;
 }
 
-.page-title{
+.page-title {
   text-align: center;
+  font-size: 30px;
 }
 </style>

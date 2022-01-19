@@ -5,6 +5,7 @@ export default {
   props: ['chartData', 'options'],
   labelFontSize: 24,
   mounted () {
-    this.renderChart(this.chartData, this.options)
+    const parsed = JSON.parse(JSON.stringify(this.chartData))
+    this.renderChart(parsed, this.options)
   }
 }

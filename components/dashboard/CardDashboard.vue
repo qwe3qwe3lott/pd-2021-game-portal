@@ -1,70 +1,116 @@
 <template>
   <div class="">
     <div class="title-card">
-      {{ statistics.nameGame }}
+      Шпион
     </div>
     <div class="cards">
-      <line-chart :chartData="countPlayers" :height="300" class="card" :options="{labelFontSize: 24}"/>
-      <bar-chart :chartData="ratingLocation" :height="300" class="card"/>
+      <line-chart
+        v-if="spyWins.datasets[0].data.length > 0"
+        :chartData="spyWins"
+        :height="300"
+        class="card"
+        :options="{labelFontSize: 50}"
+      />
+      <line-chart
+        v-if="spyLoses.datasets[0].data.length > 0"
+        :chartData="spyLoses"
+        :height="300"
+        class="card"
+        :options="{labelFontSize: 24}"
+      />
+      <line-chart
+        v-if="spiesCount.datasets[0].data.length > 0"
+        :chartData="spiesCount"
+        :height="300"
+        class="card"
+        :options="{labelFontSize: 24}"
+      />
+      <line-chart
+        v-if="locationsCount.datasets[0].data.length > 0"
+        :chartData="locationsCount"
+        :height="300"
+        class="card"
+        :options="{labelFontSize: 24}"
+      />
     </div>
   </div>
 </template>
 
 <script>
-import LineChart from './LineChart.js'
-import BarChart from './BarChart'
+import LineChart from './LineChart'
 
 export default {
   name: 'CardDashboard',
   components: {
-    BarChart,
     LineChart
   },
-  props: {
-    statistics: {
-      type: Object,
-      default: () => {
-      }
-    }
-  },
+  props: ['statistics'],
   data () {
     return {
-      countPlayers: {
+      spyWins: {
         labels: [],
         datasets: [
           {
-            backgroundColor: '#444040',
-            hoverBackgroundColor: 'rgba(255, 0, 0, 1)',
-            label: 'Количество игроков',
+            backgroundColor: '#de8282',
+            hoverBackgroundColor: 'rgb(7,7,7)',
+            label: 'Победы шпионов',
             data: []
           }
         ]
       },
-      ratingLocation: {
+      spyLoses: {
         labels: [],
         datasets: [
           {
             backgroundColor: 'rgba(55,114,255,0.56)',
             hoverBackgroundColor: 'rgba(255, 0, 0, 1)',
-            label: 'Количество используемых локаций',
+            label: 'Проигрыш шпиона',
+            defaultFontSize: '20',
+            data: []
+          }
+        ]
+      },
+      spiesCount: {
+        labels: [],
+        datasets: [
+          {
+            backgroundColor: 'rgba(94,178,65,0.56)',
+            hoverBackgroundColor: 'rgba(255, 0, 0, 1)',
+            label: 'Шпионов в игре',
+            defaultFontSize: '20',
+            data: []
+          }
+        ]
+      },
+      locationsCount: {
+        labels: [],
+        datasets: [
+          {
+            backgroundColor: 'rgba(222,215,21,0.56)',
+            hoverBackgroundColor: 'rgba(255, 0, 0, 1)',
+            label: 'Использовалось локаций',
             defaultFontSize: '20',
             data: []
           }
         ]
       }
-      // ratingLocation: [{}]
     }
   },
   beforeMount () {
     this.updateStatistics()
   },
   methods: {
-    updateStatistics () {
-      this.statistics.statisticsGame.forEach((item) => {
-        this.countPlayers.labels.push(item.number_of_players)
-        this.countPlayers.datasets[0].data.push(item.number_of_players)
-        this.ratingLocation.labels.push(item.locations_passed)
-        this.ratingLocation.datasets[0].data.push(item.locations_passed)
+    async updateStatistics () {
+      const allStatistics = await this.statistics
+      allStatistics.forEach((item) => {
+        this.spyWins.labels.push(item.spyWins)
+        this.spyWins.datasets[0].data.push(item.spyWins)
+        this.spyLoses.labels.push(item.spyLoses)
+        this.spyLoses.datasets[0].data.push(item.spyLoses)
+        this.spiesCount.labels.push(item.spiesCount)
+        this.spiesCount.datasets[0].data.push(item.spiesCount)
+        this.locationsCount.labels.push(item.locationsCount)
+        this.locationsCount.datasets[0].data.push(item.locationsCount)
       })
     }
   }
@@ -80,6 +126,9 @@ export default {
 .cards {
   display: flex;
   gap: 50px;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  border-bottom: 3px solid gray;
 }
 
 .card {
