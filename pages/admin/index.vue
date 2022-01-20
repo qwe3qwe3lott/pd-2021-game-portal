@@ -59,6 +59,7 @@ export default {
 }
 .main {
   padding: 40px;
+  background-color: #c3bfbe;
 }
 
 .page-title {

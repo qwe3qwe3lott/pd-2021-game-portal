@@ -1,7 +1,6 @@
 <template>
   <div class="form-auth">
-    <form
-      ref="form"
+    <div
       class="form-auth__items-form"
     >
       <input
@@ -22,7 +21,7 @@
       >
         Войти
       </button>
-    </form>
+    </div>
   </div>
 </template>
 

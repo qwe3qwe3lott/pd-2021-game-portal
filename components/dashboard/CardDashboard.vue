@@ -134,4 +134,16 @@ export default {
 .card {
   max-width: 400px;
 }
+
+@media (max-width: 950px) {
+  .title-card {
+    text-align: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .card {
+    max-width: 340px;
+  }
+}
 </style>
