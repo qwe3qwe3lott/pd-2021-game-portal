@@ -10,11 +10,11 @@ const schema = new Schema({
   },
   numberOfPlayers: {
     type: Number,
-    required: false
+    required: true
   },
   meta: {
     type: Object,
-    required: false
+    required: true
   },
   creationTime: {
     type: Date,

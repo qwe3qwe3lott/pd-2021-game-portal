@@ -6,6 +6,7 @@ const {
 const schema = new Schema({
   login: {
     type: String,
+    unique: true,
     required: true
   },
   password: {
