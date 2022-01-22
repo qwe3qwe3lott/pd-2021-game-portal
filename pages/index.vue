@@ -8,7 +8,6 @@
       </template>
     </ModalWindow>
     <b class="main__head-text">Список мультиплеерных игр:</b>
-    <br>
     <div class="game-holder">
       <nuxt-link class="game-button" :to="'/spy'">
         Играть в "Шпион"
